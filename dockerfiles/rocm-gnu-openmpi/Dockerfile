@@ -8,7 +8,7 @@ FROM ${base_image}
 RUN rm -rf /etc/rhsm-host
 RUN yum -y --setopt=tsflags=nodocs update && yum clean all
 
-RUN yum -y install gcc gcc-c++ xz bzip2 patch diffutils file make git python38 procps environment-modules gettext unzip libX11-devel
+RUN yum -y install gcc gcc-c++ gcc-gfortran xz bzip2 patch diffutils file make git python38 procps environment-modules gettext unzip libX11-devel
 
 # FIXME: Remove this someday
 RUN ln -s /usr/bin/python3 /usr/bin/python
