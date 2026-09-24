@@ -19,8 +19,8 @@ USER runner
 RUN git clone https://github.com/spack/spack.git /home/runner/spack && cd /home/runner/spack && git checkout bd519af8bc62a6f9eea6f4c0fa0bf498a0cc0dfb
 RUN echo -e "export SPACK_ROOT=/home/runner/spack\nsource /home/runner/spack/share/spack/setup-env.sh\n" >> /home/runner/.bashrc
 RUN bash -l -c "spack config add config:build_jobs:64"
-# Pinned spack-packages to v2025.11.0
-RUN bash -l -c "spack repo update builtin --scope defaults --commit 119680aeee8ea802c6111b7167583bddef97e82f"
+# Pinned spack-packages to v2026.06.0
+RUN bash -l -c "spack repo update builtin --scope defaults --commit d4f7c711a6a42f1c4d551c8fd10fce9a11340a81"
 RUN bash -l -c "spack bootstrap now"
 
 ARG compiler_version=
