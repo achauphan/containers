@@ -37,7 +37,6 @@ ARG mpi_version=
 ARG rocm_version=
 
 RUN mkdir /home/runner/environment
-
 RUN cat > /home/runner/environment/spack.yaml <<EOF
 spack:
   include:
@@ -50,7 +49,7 @@ spack:
   specs:
   - hip${rocm_version}
   - rocm-smi-lib${rocm_version}
-  - rocm-blast${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
+  - rocblas${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
   - rocsolver${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
   - rocsparse${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
   - rocrand${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
@@ -143,8 +142,9 @@ modules:
             'COMPILER_ROOT': '{prefix}'
 EOF
 
+RUN bash -l -c "spack module tcl refresh -y"
+
 RUN echo -e "spack env activate /home/runner/environment\n" >> /home/runner/.bashrc
-#RUN bash -l -c "spack module tcl refresh -y"
 RUN bash -l -c "echo \"export MODULEPATH=/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
 RUN bash -l -c "export FC=\$(type -p gfortran) >> /home/runner/.bashrc"
 RUN bash -l -c "module load llvm && spack compiler find --mixed-toolchain $COMPILER_ROOT"
@@ -180,7 +180,7 @@ RUN bash -l -c "spack module tcl refresh -y %llvm+clang+lld${compiler_version}"
 RUN cat >> /home/runner/.bashrc <<EOF
 module load hip
 module load rocm-smi-lib
-module load rocm-blast
+module load rocblas
 module load rocsolver
 module load rocsparse
 module load rocrand
