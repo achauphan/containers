@@ -58,8 +58,8 @@ spack:
   - toolchains.yaml
   packages:
     all:
-      require:
-      - '%llvm_gfortran'
+#      require:
+#      - '%llvm_gfortran'
       target: [${cpu_arch}]
   specs:
   - hip${rocm_version}
