@@ -8,7 +8,10 @@ FROM ${base_image}
 RUN rm -rf /etc/rhsm-host
 RUN yum -y --setopt=tsflags=nodocs update && yum clean all
 
-RUN yum -y install gcc gcc-c++ gcc-gfortran xz bzip2 patch diffutils file make git python python3-pip procps environment-modules gettext unzip libX11-devel
+RUN yum -y install gcc gcc-c++ gcc-gfortran libatomic xz bzip2 patch diffutils file make git python python3-pip procps gettext unzip libX11-devel environment-modules
+
+# flang needs quadmath.h provided by system gcc, but clang ignores gcc's include directories
+RUN ln -s /usr/lib/gcc/x86_64-redhat-linux/*/include/quadmath*.h /usr/include/
 
 RUN useradd runner
 USER runner
@@ -30,45 +33,50 @@ RUN bash -l -c "spack compiler find"
 RUN bash -l -c "\
     spack -C /home/runner config add 'concretizer:targets:host_compatible:false'"
 RUN bash -l -c "\
-    (spack -C /home/runner install --deprecated llvm-amdgpu+link_llvm_dylib${rocm_version} target=${cpu_arch} || true) && \
-    spack -C /home/runner install --deprecated llvm-amdgpu+link_llvm_dylib${rocm_version} target=${cpu_arch} && \
+    (spack -C /home/runner install --deprecated llvm-amdgpu${rocm_version}+link_llvm_dylib target=${cpu_arch} || true) && \
+    spack -C /home/runner install --deprecated llvm-amdgpu${rocm_version}+link_llvm_dylib target=${cpu_arch} && \
     spack clean --downloads"
 
 ARG mpi_version=
 
 RUN mkdir /home/runner/environment
 
-run cat > /home/runner/environment/toolchains.yaml <<EOF
-toolchains:
-  llvm_gfortran:
-  - spec: "%c=llvm-amdgpu"
-    when: "%c"
-  - spec: "%cxx=llvm-amdgpu"
-    when: "%cxx"
-  - spec: "%fortran=gcc"
-    when: "%fortran"
-EOF
-
-#      - '%clang${compiler_version}'
-
-RUN cat > /home/runner/environment/spack.yaml <<EOF
+RUN LLVM_PREFIX=$(/home/runner/spack/bin/spack location -i llvm-amdgpu${rocm_version}+link_llvm_dylib) && \
+cat > /home/runner/environment/spack.yaml <<EOF
 spack:
   include:
   - modules.yaml
-  - toolchains.yaml
   packages:
+    llvm-amdgpu:
+      buildable: false
+      externals:
+      - spec: llvm-amdgpu${rocm_version}+link_llvm_dylib target=${cpu_arch}
+        prefix: ${LLVM_PREFIX}
+        extra_attributes:
+          compilers:
+            c: ${LLVM_PREFIX}/bin/clang
+            cxx: ${LLVM_PREFIX}/bin/clang++
+            fortran: ${LLVM_PREFIX}/bin/flang
+    c:
+      require: ['llvm-amdgpu${rocm_version}']
+    cxx:
+      require: ['llvm-amdgpu${rocm_version}']
+    fortran:
+      require: ['llvm-amdgpu${rocm_version}']
     all:
-      require:
-      - '%llvm_gfortran'
+      variants: ['amdgpu_target=${gpu_arch}']
       target: [${cpu_arch}]
+  definitions:
+  - rocm_pkgs:
+    - hip
+    - rocm-smi-lib
+    - rocblas ~hipblaslt
+    - rocsolver
+    - rocsparse
   specs:
-  - hip${rocm_version}
-  - rocm-smi-lib${rocm_version}
-  - rocblas${rocm_version} amdgpu_target=${gpu_arch}
-  - rocsolver${rocm_version}  amdgpu_target=${gpu_arch}
-  - rocsparse${rocm_version}  amdgpu_target=${gpu_arch}
-  - rocrand${rocm_version}  amdgpu_target=${gpu_arch}
-  - rocthrust${rocm_version}  amdgpu_target=${gpu_arch}
+  - matrix:
+    - [\$rocm_pkgs]
+    - ['${rocm_version}']
   - openblas
   - openmpi${mpi_version}
   - boost +program_options+system
@@ -100,7 +108,7 @@ spack:
     unify: true
 EOF
 
-RUN cat >>  /home/runner/environment/modules.yaml <<EOF
+RUN cat >> /home/runner/environment/modules.yaml <<EOF
 modules:
   prefix_inspections:
     ./bin:
@@ -154,7 +162,7 @@ modules:
         environment:
           set:
             'COMPILER_ROOT': '{prefix}'
-      llvm:
+      llvm-amdgpu:
         environment:
           set:
             'COMPILER_ROOT': '{prefix}'
@@ -166,11 +174,9 @@ RUN echo -e "spack env activate /home/runner/environment\n" >> /home/runner/.bas
 # LLVM built targeting given cpu_arch located here
 RUN bash -l -c "echo \"export MODULEPATH=/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-${cpu_arch}\" >> /home/runner/.bashrc"
 # Moduling loading LLVM requires the system GCC runtime located here
-RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64_v4\" >> /home/runner/.bashrc"
-# GCC runtime requires glibc located here
-RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
-#RUN bash -l -c "echo \"export FC=\\\$(type -p gfortran)\" >> /home/runner/.bashrc"
-RUN bash -l -c "module load llvm-amdgpu && spack compiler find $COMPILER_ROOT"
+#RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64_v4\" >> /home/runner/.bashrc"
+## GCC runtime requires glibc located here
+#RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
 
 RUN bash -l -c "spack external find python"
 RUN bash -l -c "spack concretize --fresh --force"
@@ -201,15 +207,13 @@ ENV AT2_IMAGE=${AT2_image}
 ARG AT2_image_fullpath=
 ENV AT2_IMAGE_FULLPATH=${AT2_image_fullpath}
 
-RUN bash -l -c "spack module tcl refresh -y %llvm+clang+lld${compiler_version}"
+RUN bash -l -c "spack module tcl refresh -y %llvm-amdgpu${rocm_version}"
 RUN cat >> /home/runner/.bashrc <<EOF
 module load hip
 module load rocm-smi-lib
 module load rocblas
 module load rocsolver
 module load rocsparse
-module load rocrand
-module load rocthrust
 module load openblas
 module load openmpi
 module load ccache
@@ -218,7 +222,7 @@ module load hdf5
 module load metis
 module load netcdf-c
 module load parallel-netcdf
-module load parametis
+module load parmetis
 module load superlu-dist
 module load superlu
 module load zlib
@@ -241,7 +245,7 @@ if [ -d /ccache-dir ]; then
 else
   export CCACHE_DIR=$HOME/ccache-dir
   mkdir -p \$CCACHE_DIR
-fi" 
+fi
 EOF
 
 # Setup artifact Dockerfile in image
