@@ -1,9 +1,9 @@
 #/bin/bash
 
 ROCM_VERSION=7.2.1
-COMPILER_VERSION=19.1.7 # clang
+COMPILER_VERSION=22.1.5 # clang
 OPENMPI_VERSION=4.1.6
-CPU_ARCH=linux-rhel9-zen4
+CPU_ARCH=zen4
 GPU_ARCH=gfx942
 
 BUILDER=$(which podman 2> /dev/null)

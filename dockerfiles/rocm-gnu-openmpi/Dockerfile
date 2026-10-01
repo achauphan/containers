@@ -13,44 +13,62 @@ RUN yum -y install gcc gcc-c++ gcc-gfortran xz bzip2 patch diffutils file make g
 RUN useradd runner
 USER runner
 
-RUN git clone https://github.com/spack/spack.git /home/runner/spack && cd /home/runner/spack && git checkout bd519af8bc62a6f9eea6f4c0fa0bf498a0cc0dfb
+# Pinned spack to v1.2.2
+RUN git clone https://github.com/spack/spack.git /home/runner/spack && cd /home/runner/spack && git checkout 3e19345b6e12f5ff1b874f4059622fc6a1fd804a
 RUN echo -e "export SPACK_ROOT=/home/runner/spack\nsource /home/runner/spack/share/spack/setup-env.sh\n" >> /home/runner/.bashrc
 RUN bash -l -c "spack config add config:build_jobs:64"
 # Pinned spack-packages to v2026.06.0
 RUN bash -l -c "spack repo update builtin --scope defaults --commit d4f7c711a6a42f1c4d551c8fd10fce9a11340a81"
 RUN bash -l -c "spack bootstrap now"
 
+ARG rocm_version=
 ARG compiler_version=
 ARG cpu_arch=
 ARG gpu_arch=
 
 RUN bash -l -c "spack compiler find"
-RUN bash -l -c " \
-    (spack -C /home/runner install --deprecated llvm+link_llvm_dylib+clang+lld${compiler_version} target=x86_64 || true) && \
-    spack -C /home/runner install --deprecated llvm+link_llvm_dylib+clang+lld${compiler_version} target=x86_64 && \
+RUN bash -l -c "\
+    spack -C /home/runner config add 'concretizer:targets:host_compatible:false'"
+RUN bash -l -c "\
+    (spack -C /home/runner install --deprecated llvm-amdgpu+link_llvm_dylib${rocm_version} target=${cpu_arch} || true) && \
+    spack -C /home/runner install --deprecated llvm-amdgpu+link_llvm_dylib${rocm_version} target=${cpu_arch} && \
     spack clean --downloads"
 
 ARG mpi_version=
-ARG rocm_version=
 
 RUN mkdir /home/runner/environment
+
+run cat > /home/runner/environment/toolchains.yaml <<EOF
+toolchains:
+  llvm_gfortran:
+  - spec: "%c=llvm-amdgpu"
+    when: "%c"
+  - spec: "%cxx=llvm-amdgpu"
+    when: "%cxx"
+  - spec: "%fortran=gcc"
+    when: "%fortran"
+EOF
+
+#      - '%clang${compiler_version}'
+
 RUN cat > /home/runner/environment/spack.yaml <<EOF
 spack:
   include:
   - modules.yaml
+  - toolchains.yaml
   packages:
     all:
       require:
-      - '%clang${compiler_version}'
-      target: [x86_64]
+      - '%llvm_gfortran'
+      target: [${cpu_arch}]
   specs:
   - hip${rocm_version}
   - rocm-smi-lib${rocm_version}
-  - rocblas${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
-  - rocsolver${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
-  - rocsparse${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
-  - rocrand${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
-  - rocthrust${rocm_version} arch=${cpu_arch} amdgpu_target=${gpu_arch}
+  - rocblas${rocm_version} amdgpu_target=${gpu_arch}
+  - rocsolver${rocm_version}  amdgpu_target=${gpu_arch}
+  - rocsparse${rocm_version}  amdgpu_target=${gpu_arch}
+  - rocrand${rocm_version}  amdgpu_target=${gpu_arch}
+  - rocthrust${rocm_version}  amdgpu_target=${gpu_arch}
   - openblas
   - openmpi${mpi_version}
   - boost +program_options+system
@@ -59,7 +77,7 @@ spack:
   - netcdf-c +parallel-netcdf
   - parallel-netcdf
   - parmetis
-  - superlu-dist
+  - superlu-dist@5.4.0
   - superlu@5
   - zlib
   - matio
@@ -71,12 +89,15 @@ spack:
   - gh
   view:
     default:
-      root: /rocm
+      root: /home/runner/rocm
       exclude:
-        - 'llvm'
+        - 'openmpi'
+        - 'llvm' # only want llvm-amdgpu in view
         - 'rocm-cmake'
   concretizer:
-    unify: when_possible
+    targets:
+      host_compatible: false
+    unify: true
 EOF
 
 RUN cat >>  /home/runner/environment/modules.yaml <<EOF
@@ -142,16 +163,23 @@ EOF
 RUN bash -l -c "spack module tcl refresh -y"
 
 RUN echo -e "spack env activate /home/runner/environment\n" >> /home/runner/.bashrc
-RUN bash -l -c "echo \"export MODULEPATH=/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
-RUN bash -l -c "export FC=\$(type -p gfortran) >> /home/runner/.bashrc"
-RUN bash -l -c "module load llvm && spack compiler find --mixed-toolchain $COMPILER_ROOT"
+# LLVM built targeting given cpu_arch located here
+RUN bash -l -c "echo \"export MODULEPATH=/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-${cpu_arch}\" >> /home/runner/.bashrc"
+# Moduling loading LLVM requires the system GCC runtime located here
+RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64_v4\" >> /home/runner/.bashrc"
+# GCC runtime requires glibc located here
+RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
+#RUN bash -l -c "echo \"export FC=\\\$(type -p gfortran)\" >> /home/runner/.bashrc"
+RUN bash -l -c "module load llvm-amdgpu && spack compiler find $COMPILER_ROOT"
 
 RUN bash -l -c "spack external find python"
-RUN bash -l -c "spack concretize --force --fresh"
+RUN bash -l -c "spack concretize --fresh --force"
 # Export spack environment into a Makefile and run
 # `make` twice to mimic a retry if a pull from spack mirror fails.
 # Perform all the related cleanup under a single RUN to avoid
 # including ghost files in the final image layer.
+#
+# Spack depfile is deprecated and will be removed in v1.4
 RUN bash -l -c " \
     cd /home/runner && \
     spack env depfile -o Makefile && \
