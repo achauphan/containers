@@ -157,18 +157,20 @@ EOF
 RUN bash -l -c "spack module tcl refresh -y"
 RUN echo -e "spack env activate /home/runner/environment\n" >> /home/runner/.bashrc
 
-
 # GCC built targeting given cpu_arch located here
 RUN bash -l -c "echo \"export MODULEPATH=/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-${cpu_arch}\" >> /home/runner/.bashrc"
 # Moduling loading GCC requires the system GCC runtime located here
 RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64_v4\" >> /home/runner/.bashrc"
 # GCC runtime requires glibc located here
 RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
-#RUN bash -l -c "echo \"export FC=\\\$(type -p gfortran)\" >> /home/runner/.bashrc"
 RUN bash -l -c "module load gcc && spack compiler find $COMPILER_ROOT"
 RUN bash -l -c "spack external find python"
 RUN bash -l -c "spack concretize --fresh --force"
 
+# Pre-install llvm-amdgpu for ROCm related packages first so that
+# we can modify the rpath of amdclang to point to the correct spack built gcc-runtime.
+# Otherwise binaries built with amdclang that linked to spack built gcc-runtime don't have
+# the paths to gcc-runtime during loader time causing it to default to system gcc-runtime.
 RUN bash -l -c "\
     spack -C /home/runner install llvm-amdgpu${rocm_version}+link_llvm_dylib target=${cpu_arch} && \
     spack clean --downloads"
