@@ -34,6 +34,8 @@ RUN bash -l -c "\
     spack -C /home/runner install --deprecated gcc${compiler_version} target=${cpu_arch} && \
     spack clean --downloads"
 
+
+
 ARG mpi_version=
 
 RUN mkdir /home/runner/environment
@@ -147,8 +149,9 @@ modules:
 EOF
 
 RUN bash -l -c "spack module tcl refresh -y"
-
 RUN echo -e "spack env activate /home/runner/environment\n" >> /home/runner/.bashrc
+
+
 # GCC built targeting given cpu_arch located here
 RUN bash -l -c "echo \"export MODULEPATH=/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-${cpu_arch}\" >> /home/runner/.bashrc"
 # Moduling loading GCC requires the system GCC runtime located here
@@ -157,9 +160,18 @@ RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/sha
 RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
 #RUN bash -l -c "echo \"export FC=\\\$(type -p gfortran)\" >> /home/runner/.bashrc"
 RUN bash -l -c "module load gcc && spack compiler find $COMPILER_ROOT"
-
 RUN bash -l -c "spack external find python"
 RUN bash -l -c "spack concretize --fresh --force"
+
+RUN bash -l -c "\
+    spack -C /home/runner install llvm-amdgpu${rocm_version}+link_llvm_dylib target=${cpu_arch} && \
+    spack clean --downloads"
+RUN bash -l -c '\
+    ROCM_CONFIG=$(spack location -i llvm-amdgpu)/bin/rocm.cfg && \
+    GCC_LIB="-Wl,-rpath,$(spack location -i gcc${compiler_version})/lib64" && \
+    echo ${GCC_LIB} >> ${ROCM_CONFIG}'
+
+
 # Export spack environment into a Makefile and run
 # `make` twice to mimic a retry if a pull from spack mirror fails.
 # Perform all the related cleanup under a single RUN to avoid
