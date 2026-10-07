@@ -23,7 +23,7 @@ nohup ${BUILDER} build \
         --build-arg=mpi_version="@${OPENMPI_VERSION}" \
         --build-arg=cpu_arch="${CPU_ARCH}" \
         --build-arg=gpu_arch="${GPU_ARCH}" \
-        -t rocm-${ROCM_VERSION}-gcc-${COMPILER_VERSIOn}-openmpi-${OPENMPI_VERSION}:${TAG} \
+        -t rocm-${ROCM_VERSION}-gcc-${COMPILER_VERSION}-openmpi-${OPENMPI_VERSION}-${CPU_ARCH}-${GPU_ARCH}:${TAG} \
          . \
   &> rocm-gcc-openmpi-build.log &
 

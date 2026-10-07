@@ -26,6 +26,9 @@ ARG compiler_version=
 ARG cpu_arch=
 ARG gpu_arch=
 
+# GCC is used to build most of the TPLs except for ROCM
+# ones which will use amdclang. Trilinos builds would then
+# be using the
 RUN bash -l -c "spack compiler find"
 RUN bash -l -c "\
     spack -C /home/runner config add 'concretizer:targets:host_compatible:false'"
@@ -179,7 +182,6 @@ RUN bash -l -c '\
     GCC_LIB="-Wl,-rpath,$(spack location -i gcc${compiler_version})/lib64" && \
     echo ${GCC_LIB} >> ${ROCM_CONFIG}'
 
-
 # Export spack environment into a Makefile and run
 # `make` twice to mimic a retry if a pull from spack mirror fails.
 # Perform all the related cleanup under a single RUN to avoid
@@ -214,8 +216,6 @@ module load rocm-smi-lib
 module load rocblas
 module load rocsolver
 module load rocsparse
-module load rocrand
-module load rocthrust
 module load openblas
 module load openmpi
 module load ccache
@@ -224,7 +224,7 @@ module load hdf5
 module load metis
 module load netcdf-c
 module load parallel-netcdf
-module load parametis
+module load parmetis
 module load superlu-dist
 module load superlu
 module load zlib
@@ -247,7 +247,7 @@ if [ -d /ccache-dir ]; then
 else
   export CCACHE_DIR=$HOME/ccache-dir
   mkdir -p \$CCACHE_DIR
-fi" 
+fi
 EOF
 
 # Setup artifact Dockerfile in image

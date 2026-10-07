@@ -1,0 +1,1550 @@
+STEP 1/50: FROM registry.access.redhat.com/ubi9/ubi@sha256:f9a905cb655db94303bb2a37f150256a4d24c5ef7da07071888b41b52b588e5b
+STEP 2/50: RUN rm -rf /etc/rhsm-host
+--> Using cache 9c192acd580e79af278c0240a0b7b534d8e65fe8be968a202caf96f78a547149
+--> 9c192acd580e
+STEP 3/50: RUN yum -y --setopt=tsflags=nodocs update && yum clean all
+--> Using cache 1d0ebc46a794f7c42f88f1e0b36ea02f42bb3d3a9b7972fe1c2ab87f5d40e21b
+--> 1d0ebc46a794
+STEP 4/50: RUN yum -y install gcc gcc-c++ gcc-gfortran xz bzip2 patch diffutils file make git python python3-pip procps environment-modules gettext unzip libX11-devel
+--> Using cache e431b207081d103b3a1ac5aa62cca91661bf099be94178025f30818441ab71f0
+--> e431b207081d
+STEP 5/50: RUN useradd runner
+--> Using cache 696bb36253cc16cfc44f047784974e62240a1304b6332245106d55dbe51ff98a
+--> 696bb36253cc
+STEP 6/50: USER runner
+--> Using cache 8b4275c26d67407de147f8940fabd0f56bb7a28fd72e5e9049636759c85de32d
+--> 8b4275c26d67
+STEP 7/50: RUN git clone https://github.com/spack/spack.git /home/runner/spack && cd /home/runner/spack && git checkout 3e19345b6e12f5ff1b874f4059622fc6a1fd804a
+--> Using cache 05423d8c4e7433e3f852cacdc64228e4c8db53dcda39ae21f634e1757aac0fa3
+--> 05423d8c4e74
+STEP 8/50: RUN echo -e "export SPACK_ROOT=/home/runner/spack\nsource /home/runner/spack/share/spack/setup-env.sh\n" >> /home/runner/.bashrc
+--> Using cache 0b7051a18dc5c3b3e39636cdba53af5625df0a7091377e58353170dd529539d2
+--> 0b7051a18dc5
+STEP 9/50: RUN bash -l -c "spack config add config:build_jobs:64"
+--> Using cache c392b1b2da2749c4b77af0098ecb310be0e80b0cfe511e24f50ad90caaf49ca2
+--> c392b1b2da27
+STEP 10/50: RUN bash -l -c "spack repo update builtin --scope defaults --commit d4f7c711a6a42f1c4d551c8fd10fce9a11340a81"
+--> Using cache 8c4fd7ceffda718d45752842268345763c6e3d75c70f552e4cbb813f3c0a5e37
+--> 8c4fd7ceffda
+STEP 11/50: RUN bash -l -c "spack bootstrap now"
+--> Using cache 1eb0603d2dd6e76d88d3d14edc8de07ae016556222b43643ba27b0ab91afff3c
+--> 1eb0603d2dd6
+STEP 12/50: ARG rocm_version=
+--> Using cache d0d0dfb96dd0406d092930f0dfd80316fee6b4de7de5d56236d6a21399a9c7fa
+--> d0d0dfb96dd0
+STEP 13/50: ARG compiler_version=
+--> Using cache 3d72ae379ebc2db394f0d6ecebeb4db02fd2bf9944ab248a29c2fa0e43f36ced
+--> 3d72ae379ebc
+STEP 14/50: ARG cpu_arch=
+--> Using cache 238fcf6fc09f6978c5b7ed21b0ad3b3708e543b79845c51ed45bfdef970815b4
+--> 238fcf6fc09f
+STEP 15/50: ARG gpu_arch=
+--> Using cache 216887bf75d52c75e44061a68324eb7a0658221ccf97a77f25bca145277689d1
+--> 216887bf75d5
+STEP 16/50: RUN bash -l -c "spack compiler find"
+--> Using cache e10fe7de5641b1ed293ce86ef85374b0c29cc33bd6b0500b9d2578918d794600
+--> e10fe7de5641
+STEP 17/50: RUN bash -l -c "    spack -C /home/runner config add 'concretizer:targets:host_compatible:false'"
+--> Using cache 242bd62ae16e0271a588ac184a5fd66a6c788b66edd340a8ea0e4e720bb44a37
+--> 242bd62ae16e
+STEP 18/50: RUN bash -l -c "    (spack -C /home/runner install --deprecated gcc${compiler_version} target=${cpu_arch} || true) &&     spack -C /home/runner install --deprecated gcc${compiler_version} target=${cpu_arch} &&     spack clean --downloads"
+--> Using cache 9a1d1188a91efb3143e1183b853fb7ea01a72d46aa5a7adacf5b38b7ba2dbce9
+--> 9a1d1188a91e
+STEP 19/50: ARG mpi_version=
+--> Using cache 16f0a614df1c0f79ecf74b626b62a4813ed9f9c65da4a7a1650281d3f5c2df11
+--> 16f0a614df1c
+STEP 20/50: RUN mkdir /home/runner/environment
+--> Using cache 1975096f177a8d126e2c3f4872fa1131b2dbb5722339027d2374a45958e06fbb
+--> 1975096f177a
+STEP 21/50: RUN cat > /home/runner/environment/spack.yaml <<EOF (spack:...)
+--> bcf6a98773c2
+STEP 22/50: RUN cat >>  /home/runner/environment/modules.yaml <<EOF (modules:...)
+--> a13b9b1319b7
+STEP 23/50: RUN bash -l -c "spack module tcl refresh -y"
+==> Regenerating tcl module files
+--> 03b55c3a4525
+STEP 24/50: RUN echo -e "spack env activate /home/runner/environment\n" >> /home/runner/.bashrc
+--> 3abed37c942f
+STEP 25/50: RUN bash -l -c "echo \"export MODULEPATH=/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-${cpu_arch}\" >> /home/runner/.bashrc"
+--> adbd621e6a8e
+STEP 26/50: RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64_v4\" >> /home/runner/.bashrc"
+--> ba3760c98b6d
+STEP 27/50: RUN bash -l -c "echo \"export MODULEPATH=\\\${MODULEPATH}:/home/runner/spack/share/spack/modules/linux-\\\$(spack arch --operating-system)-x86_64\" >> /home/runner/.bashrc"
+--> a2105c37266f
+STEP 28/50: RUN bash -l -c "module load gcc && spack compiler find $COMPILER_ROOT"
+Loading gcc/12.3.0-gcc-11.5.0-gbjninp
+  Loading requirement: glibc/2.34-none-none-45if5qv
+    gcc-runtime/11.5.0-none-none-i2ykdrm zlib-ng/2.3.3-gcc-11.5.0-uwa2o7h
+    zstd/1.5.7-gcc-11.5.0-dxaucso binutils/2.46.1-gcc-11.5.0-vpukphn
+    gmp/6.3.0-gcc-11.5.0-nxuuqkc mpfr/4.2.2-gcc-11.5.0-b4qmxig
+    mpc/1.4.1-gcc-11.5.0-lleneri
+==> Added 1 new compiler to /home/runner/environment/spack.yaml
+    gcc@12.3.0
+==> Compilers are defined in the following files:
+    /home/runner/.spack/packages.yaml
+    /home/runner/environment/spack.yaml
+--> 073a53112be7
+STEP 29/50: RUN bash -l -c "spack external find python"
+==> The following specs have been detected on this system and added to /home/runner/environment/spack.yaml
+-- no arch / no compilers ---------------------------------------
+python@3.9.25
+--> d136d0164e54
+STEP 30/50: RUN bash -l -c "spack concretize --fresh --force"
+==> Warning: /home/runner/environment/spack.yaml:20: 'packages: all: require: ["gcc@12.3.0^gcc-runtime@12.3.0"]' applies a dependency constraint to all packages. This often leads to concretization errors. This was likely intended as a requirement for a provider of a (language) virtual. Consider instead:
+# For each virtual:
+packages:
+  <virtual>:
+    require:
+    - gcc-runtime@12.3.0
+==> Concretized 26 specs:
+ -   tsgz543  boost@1.90.0+atomic~charconv+chrono~clanglibcpp~container~context~contract~conversion~date_time~debug+exception~fiber+filesystem~graph~graph_parallel~icu~iostreams~json~locale~log~math~mpi~mqtt5+multithreaded~nowide~numpy~openmethod~pic+program_options~python~random~regex~serialization+shared~signals2~singlethreaded~stacktrace+system~taggedlayout~test+thread~timer~type_erasure~url~versionedlayout~wave build_system=generic cxxstd=11 patches:=a440f96 visibility=hidden platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   ajhkyz7      ^compiler-wrapper@1.1.0 build_system=generic platform=linux os=rhel9 target=zen4
+[e]  qq72zun      ^gcc@11.5.0+binutils+bootstrap~graphite+libsanitizer~nvptx~piclibs~profiled~strip build_system=autotools build_type=RelWithDebInfo languages:='c,c++,fortran' platform=linux os=rhel9 target=x86_64
+ -   jrelvfc      ^gcc-runtime@11.5.0 build_system=generic platform=linux os=rhel9 target=zen4
+[e]  45if5qv      ^glibc@2.34 build_system=autotools platform=linux os=rhel9 target=x86_64
+ -   cspofji  ccache@4.12.1~ipo+redis build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   hmmszjj      ^fmt@12.1.0~ipo+pic~shared build_system=cmake build_type=Release cxxstd=11 generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   rekpwfe      ^gmake@4.4.1~guile build_system=generic platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   6qvaa4f      ^hiredis@1.1.0~ipo~ssl~test~test_async~test_ssl build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   skps4xe      ^pkgconf@2.5.1 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   7xy2tpo      ^span-lite@0.11.0~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   giekeru      ^xxhash@0.8.3 build_system=makefile platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+[+]  dxaucso      ^zstd@1.5.7+programs build_system=makefile compression:=none libs:=shared,static platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+[+]  jebp3js          ^compiler-wrapper@1.1.0 build_system=generic platform=linux os=rhel9 target=icelake
+[+]  i2ykdrm          ^gcc-runtime@11.5.0 build_system=generic platform=linux os=rhel9 target=x86_64_v4
+[+]  2wjqjye          ^gmake@4.4.1~guile build_system=generic platform=linux os=rhel9 target=icelake %c=gcc@11.5.0
+ -   aecrwmz  cmake@3.31.11~doc+ncurses+ownlibs~qtgui build_system=generic build_type=Release platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   gtulshg      ^curl@8.20.0~gssapi~ldap~libidn2~librtmp~libssh~libssh2+nghttp2 build_system=autotools libs:=shared,static tls:=openssl platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   sopwhpe          ^nghttp2@1.67.1 build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   delhree          ^openssl@3.6.1~docs+shared build_system=generic certs=mozilla platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   hpiym5z              ^ca-certificates-mozilla@2026-03-19 build_system=generic platform=linux os=rhel9 target=zen4
+ -   otlv5yy      ^ncurses@6.6~symlinks+termlib abi=none build_system=autotools patches:=7a351bc platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   djewfm4  gh@2.93.0 build_system=go platform=linux os=rhel9 target=zen4
+ -   tb5exqb      ^go@1.26.4 build_system=generic platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   qnjbana          ^bash@5.3 build_system=autotools patches:=097cd72,1f60843,29119ad,9591d24,c0976bb,cca1ef5,e385548,eee30fe,f245d9c platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   se5uyg2          ^go-bootstrap@1.24.13 build_system=generic platform=linux os=rhel9 target=zen4
+ -   xgzpipo          ^grep@3.12~pcre build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ygcd6x5          ^sed@4.9 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   2fqrbj6  googletest@1.17.0~absl+gmock~ipo+pthreads+shared build_system=cmake build_type=Release cxxstd=17 generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   gcmvg36  hdf5@1.14.6~cxx~fortran+hl~ipo~java~map+mpi+shared~subfiling~szip~threadsafe+tools api=default build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   5nlktp2  hip@7.2.1~asan~cuda~ipo+rocm build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   gizjrv2      ^comgr@7.2.1~asan~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   fupoz4l      ^glx@1.4 build_system=bundle platform=linux os=rhel9 target=zen4
+ -   b2erqav          ^mesa@25.0.5~egl+glx+llvm+opengl~opengles+osmesa~strip build_system=meson buildtype=release default_library:=shared platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   lqdc767              ^bison@3.8.2~color build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   alhnr63              ^dri2proto@2.8 build_system=autotools platform=linux os=rhel9 target=zen4
+ -   7fnep4g              ^flex@2.6.3+lex~nls build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   lhnzqgi              ^glproto@1.4.17 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   rc6ut5c              ^libx11@1.8.13 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   h5bcdcm                  ^inputproto@2.3.2 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   h3wwevr                  ^kbproto@1.0.7 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   qitu6cv                  ^xextproto@7.3.0 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   i54wehh                  ^xproto@7.0.31 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   iwqly6m                  ^xtrans@1.6.0 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   flcve4v              ^libxcb@1.17.0 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   yv3wyp6                  ^libxau@1.0.12 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   7ah4vhl                  ^libxdmcp@1.1.5 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   37iibff                  ^xcb-proto@1.17.0 build_system=autotools platform=linux os=rhel9 target=zen4
+ -   euhwsqb              ^libxext@1.3.7 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   n7mekda              ^libxshmfence@1.3.3 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   2r3zban              ^libxt@1.3.1 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   3s27fxo                  ^libice@1.1.2 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   rpotsx6                  ^libsm@1.2.6 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   7yio3jq              ^py-mako@1.3.10 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   smrko65                  ^py-markupsafe@3.0.3 build_system=python_pip platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   yit7mom              ^xrandr@1.5.3 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ccnufnt                  ^libxrandr@1.5.5 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   vcetamy                      ^renderproto@0.11.1 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   nmrs3yb                  ^libxrender@0.9.12 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   5gvaubu                  ^randrproto@1.5.0 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   qwfz262      ^hipcc@7.2.1~ipo build_system=cmake build_type=Release generator=make patches:=1b049ea platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   tgivrxi      ^hipify-clang@7.2.1~asan~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   dkctoqh      ^hsa-rocr-dev@7.2.1~asan+image~ipo+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   dzozzpa          ^elfutils@0.194~debuginfod+exeprefix+nls build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   uxizr2a      ^libedit@3.1-20251016 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ffr2utq      ^numactl@2.0.19 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   royfhwm          ^autoconf@2.72 build_system=autotools platform=linux os=rhel9 target=zen4
+ -   fatxyd3          ^automake@1.18.1 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   yihehlq          ^libtool@2.5.4 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   5mqwg5p              ^file@5.46+static build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   fgbbwex              ^findutils@4.10.0 build_system=autotools patches:=440b954 platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   7zyltn4      ^perl@5.42.0+cpanm+opcode+open+shared+threads build_system=generic platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   tsvewaf          ^berkeley-db@18.1.40+cxx~docs+stl build_system=autotools patches:=26090f4,b231fcc platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   to5gjp7          ^gdbm@1.26 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   wtqes2u          ^less@692 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   jkamavg      ^perl-file-which@1.27 build_system=perl platform=linux os=rhel9 target=zen4
+ -   7huqc4k      ^perl-uri-encode@1.1.1 build_system=perl platform=linux os=rhel9 target=zen4
+ -   tprzcql          ^perl-module-build@0.4234 build_system=perl platform=linux os=rhel9 target=zen4
+ -   6kdpp3t      ^py-cppheaderparser@2.7.4 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   3nmnaym          ^py-ply@3.11 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   pb3zixa          ^py-setuptools@82.0.1 build_system=generic platform=linux os=rhel9 target=zen4
+ -   tb24u3x          ^python-venv@1.0 build_system=generic platform=linux os=rhel9 target=zen4
+ -   ze6hgi4      ^rocm-core@7.2.1~asan~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   7vodwkd      ^rocminfo@7.2.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   3biiqdv      ^rocprofiler-register@7.2.1~ipo build_system=cmake build_type=Release generator=make patches:=99764ee platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   yz3lb47          ^glog@0.7.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   2mip7tb              ^gflags@2.2.2~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   gwjqafa          ^libunwind@1.8.3~block_signals~conservative_checks~cxx_exceptions~debug~debug_frame+docs~pic+tests+weak_backtrace~xz~zlib build_system=autotools components:=none libs:=shared,static patches:=4562c23 platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   7whjufv      ^roctracer-dev-api@7.2.1 build_system=generic platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   35wmkr2  llvm-amdgpu@7.2.1~ipo+link_llvm_dylib~llvm_dylib+rocm-device-libs build_system=cmake build_type=Release generator=ninja patches:=74471ee platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   yzt7ycj      ^libdrm@2.4.131~docs~strip build_system=meson buildtype=release default_library:=shared platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   aye5xux          ^libpciaccess@0.17 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   nsvpbs2              ^util-macros@1.20.2 build_system=autotools platform=linux os=rhel9 target=zen4
+ -   kpjkmsh          ^libpthread-stubs@0.5 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   fkj3m2g          ^meson@1.11.1 build_system=python_pip patches:=0f0b1bd platform=linux os=rhel9 target=zen4
+ -   o22k5tm      ^libelf@0.8.13 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   mvi3opk      ^libxml2@2.15.3+pic~python+shared build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   vkbcvyc          ^libiconv@1.18 build_system=autotools libs:=shared,static platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   6jqsz7o          ^xz@5.8.3~pic build_system=autotools libs:=shared,static platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ufopikc      ^python@3.12.13+bz2+crypt+ctypes+dbm~debug+libxml2+lzma~optimizations+pic+pyexpat+pythoncmd+readline+shared+sqlite3+ssl~static~tests~tkinter+uuid+zlib build_system=generic platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   ixlvx5u          ^expat@2.8.1+libbsd build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   jnnlsuq              ^libbsd@0.12.2 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   qixz735                  ^libmd@1.1.0 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   2z7fe4t          ^gettext@1.0+bzip2+curses+git~libunistring+libxml2+pic+shared+tar+xz build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   z7jgdfw              ^tar@1.35 build_system=autotools zip=pigz platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   2nld7wm                  ^pigz@2.8 build_system=makefile platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   retohgt          ^libffi@3.5.2 build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   lphpldq          ^libxcrypt@4.5.2~obsolete_api build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   zubq5qi          ^readline@8.3 build_system=autotools patches:=21f0a03,72dee13,e273643 platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   i2elx43          ^sqlite@3.53.1+column_metadata+fts+rtree build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   nxfkfy4          ^util-linux-uuid@2.41 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   q4tkos3      ^xxd-standalone@8.2.1201 build_system=makefile platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   qmwtxbu      ^z3@4.15.4~gmp~ipo~python build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   ctuhznf  matio@1.5.26+hdf5+shared+zlib build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ut6f4un  metis@5.1.0~gdb~int64~ipo~no_warning~real64+shared build_system=cmake build_type=Release generator=make patches:=4991da9,93a7903,b1225da platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   cmtpmm5  netcdf-c@4.10.0+blosc~byterange~dap~fsync~hdf4~jna~logging+mpi~nczarr_zip+optimize+parallel-netcdf+pic+shared+szip+zstd build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ckopqqn      ^bzip2@1.0.8~debug~pic+shared build_system=generic platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   m2jd6sb          ^diffutils@3.12 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   pjcrx3o      ^c-blosc@1.21.6+avx2~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   qkrgm5r          ^lz4@1.10.0+pic build_system=makefile libs:=shared,static platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   5vma2pr          ^snappy@1.2.1~ipo+pic+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   tat4zez      ^libaec@1.1.4~ipo+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   5x6chzb  ninja@1.13.2+re2c build_system=generic platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   zkalq5a      ^re2c@4.4 build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   xhe6mgu  openblas@0.3.33~bignuma~consistent_fpcsr+dynamic_dispatch+fortran~ilp64+locking+pic+shared~static build_system=makefile patches:=723ddc1 symbol_suffix=none threads=none platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   ds5nj7e  openmpi@4.1.6+atomics~cuda~cxx~cxx_exceptions~debug+fortran~gpfs~internal-hwloc~internal-libevent~internal-pmix~ipv6~java~lustre~memchecker~openshmem~orterunprefix~rocm+romio+rsh~static~two_level_namespace+vt+wrapper-rpath build_system=autotools fabrics:=none romio-filesystem:=none schedulers:=none platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   7wwbeap      ^hwloc@2.13.0~cairo~cuda~gl~level_zero~libudev+libxml2~nvml~opencl+pci~rocm build_system=autotools libs:=shared,static patches:=b4db98b platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   af32c5l      ^libevent@2.1.12+openssl build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ghty3zi      ^openssh@10.3p1+gssapi build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   sjyz7gh          ^krb5@1.22.2+shared build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   fbwjtoc      ^pmix@6.1.0~munge~python build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   4jddkhv  parallel-netcdf@1.14.1~burstbuffer+cxx~examples+fortran+pic+shared build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   7p4iph3      ^m4@1.4.21+sigsegv build_system=autotools platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   d67d25u          ^libsigsegv@2.15 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   ukd36e4  parmetis@4.0.3~gdb~int64~ipo+shared build_system=cmake build_type=Release generator=make patches:=4f89253,50ed208,704b84f platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   r4iyhmm  rocblas@7.2.1~asan+hipblaslt~ipo+tensile amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make patches:=1f436c5,d2b0a15 platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   43zem4y      ^hipblaslt@7.2.1~asan~ipo amdgpu_target:=auto build_system=cmake build_type=Release generator=make patches:=0364327,503555b platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   pow44ly          ^hipblas-common@7.2.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+ -   e6gr4iw          ^py-packaging@26.2 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   hqx23un              ^py-flit-core@3.12.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   jgaqvrr      ^msgpack-c@3.1.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   6v6dysc      ^procps@4.0.6+nls build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   st7mf47      ^py-joblib@1.5.3 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   cffpdjz      ^py-msgpack@1.1.2 build_system=python_pip platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   qkpvyua          ^py-cython@3.2.4 build_system=python_pip platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   mnmnndr      ^py-pip@26.1.2 build_system=generic platform=linux os=rhel9 target=zen4
+ -   as2x25j      ^py-pyyaml@6.0.3+libyaml build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   zk72qxl          ^libyaml@0.2.5 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   jwrf6vh      ^py-virtualenv@21.4.1 build_system=python_pip platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   eqkpuev          ^py-distlib@0.4.0 build_system=python_pip platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   xrlyqnx          ^py-filelock@3.29.1 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   3r7yvg6          ^py-hatch-vcs@0.5.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   mk42xg7              ^py-setuptools-scm@9.2.2+toml build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   dszngsg                  ^git@2.53.0+man+nls+perl+subtree~tcltk build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   7jxg5uc                      ^libidn2@2.3.8 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   63dmk4o                          ^libunistring@1.4.2 build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   fzgjuuu                      ^pcre2@10.44~jit+multibyte+pic build_system=autotools platform=linux os=rhel9 target=zen4 %c=gcc@11.5.0
+ -   jc7l7aa          ^py-hatchling@1.29.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   aanzpmj              ^py-pathspec@1.1.1 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   6kf253t              ^py-pluggy@1.6.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   2sxq5q7              ^py-trove-classifiers@2026.6.1.19 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   6edb7lb                  ^py-calver@2025.10.20 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   qjdbigt          ^py-platformdirs@4.10.0~wheel build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   4npwj26          ^py-python-discovery@1.4.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+ -   reechsb      ^py-wheel@0.45.1 build_system=generic platform=linux os=rhel9 target=zen4
+ -   mrat5w6      ^rocm-cmake@7.2.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   kisd4oj      ^roctracer-dev@7.2.1~asan~ipo~rocm build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   oc6p4yv  rocm-smi-lib@7.2.1~asan~ipo+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   uhawyhe  rocrand@7.2.1~asan~ipo amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %cxx,fortran=gcc@11.5.0
+ -   bk6mnfy  rocsolver@7.2.1~asan~ipo+optimal amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   4auzxjr  rocsparse@7.2.1~asan~ipo~test amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   p35oiqq      ^rocprim@7.2.1~asan~ipo amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %cxx=gcc@11.5.0
+ -   n424tcr  rocthrust@7.2.1~ipo amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   p6dgbin  superlu@5.3.0+fortran~ipo+pic build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,fortran=gcc@11.5.0
+ -   hhlz6jd  superlu-dist@5.4.0~cuda~int64~ipo~openmp+parmetis~rocm+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4 %c,cxx,fortran=gcc@11.5.0
+ -   la2cx4y  valgrind@3.27.1+boost+mpi+only64bit~ubsan build_system=autotools libs:=shared,static platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+ -   3uvl7s4  zlib@1.3.2+optimize+pic+shared build_system=makefile platform=linux os=rhel9 target=zen4 %c,cxx=gcc@11.5.0
+
+==> Updating view at /home/runner/rocm
+--> 88b11675e94f
+STEP 31/50: RUN bash -l -c "     cd /home/runner &&     spack env depfile -o Makefile &&     (make -j24 || true) &&     make -j24 &&     spack clean --downloads &&     rm Makefile &&     rm -rf .cache"
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh # compiler-wrapper@1.1.0 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qq72zunpomljr3lhv3uldhm4w5xhbvxq # gcc@11.5.0+binutils+bootstrap~graphite+libsanitizer~nvptx~piclibs~profiled~strip build_system=autotools build_type=RelWithDebInfo languages:='c,c++,fortran' platform=linux os=rhel9 target=x86_64
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /45if5qvlpeyfsyucmcqxopqyyd7vqatq # glibc@2.34 build_system=autotools platform=linux os=rhel9 target=x86_64
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /hpiym5zcqhiz2i5zvuwhy2zijrviwfgu # ca-certificates-mozilla@2026-03-19 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /jebp3jslqk4t2pbar6lr6eorvq2iuoiq # compiler-wrapper@1.1.0 build_system=generic platform=linux os=rhel9 target=icelake
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /se5uyg27xa4kypiwe3b6etbvlrzp5w7y # go-bootstrap@1.24.13 build_system=generic platform=linux os=rhel9 target=zen4
+[ ] ajhkyz7 compiler-wrapper@1.1.0 staging (0s)
+[ ] se5uyg2 go-bootstrap@1.24.13 staging (0s)
+[ ] hpiym5z ca-certificates-mozilla@2026-03-19 staging (0s)
+[ ] ajhkyz7 compiler-wrapper@1.1.0 install (0s)
+[+] ajhkyz7 compiler-wrapper@1.1.0 /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh (1s)
+[ ] hpiym5z ca-certificates-mozilla@2026-03-19 install (1s)
+[+] hpiym5z ca-certificates-mozilla@2026-03-19 /home/runner/spack/opt/spack/linux-zen4/ca-certificates-mozilla-2026-03-19-hpiym5zcqhiz2i5zvuwhy2zijrviwfgu (1s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /jrelvfcziforgyrptov4fcg56jrsf4s5 # gcc-runtime@11.5.0 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /i2ykdrmzvnqhopjr36h6mphtafmruzil # gcc-runtime@11.5.0 build_system=generic platform=linux os=rhel9 target=x86_64_v4
+[ ] jrelvfc gcc-runtime@11.5.0 staging (0s)
+[ ] jrelvfc gcc-runtime@11.5.0 install (0s)
+[+] jrelvfc gcc-runtime@11.5.0 /home/runner/spack/opt/spack/linux-zen4/gcc-runtime-11.5.0-jrelvfcziforgyrptov4fcg56jrsf4s5 (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /2wjqjyekil6qtvyj4dve4mcvtib2or4b # gmake@4.4.1~guile build_system=generic platform=linux os=rhel9 target=icelake
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /dxaucso5qpxignv2t6x6tw6rmzs4vqcr # zstd@1.5.7+programs build_system=makefile compression:=none libs:=shared,static platform=linux os=rhel9 target=zen4
+[ ] se5uyg2 go-bootstrap@1.24.13 install (5s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /rekpwfe5qjqbqluizo7xc3eo2y6ttzj5 # gmake@4.4.1~guile build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7whjufvy7ga2uj3j5f3c5p27ksqqz34z # roctracer-dev-api@7.2.1 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /tsgz5434b45glb5zrz5efuuu7jivyc42 # boost@1.90.0+atomic~charconv+chrono~clanglibcpp~container~context~contract~conversion~date_time~debug+exception~fiber+filesystem~graph~graph_parallel~icu~iostreams~json~locale~log~math~mpi~mqtt5+multithreaded~nowide~numpy~openmethod~pic+program_options~python~random~regex~serialization+shared~signals2~singlethreaded~stacktrace+system~taggedlayout~test+thread~timer~type_erasure~url~versionedlayout~wave build_system=generic cxxstd=11 patches:=a440f96 visibility=hidden platform=linux os=rhel9 target=zen4
+[ ] rekpwfe gmake@4.4.1 staging (0s)
+[ ] 7whjufv roctracer-dev-api@7.2.1 staging (0s)
+[ ] tsgz543 boost@1.90.0 staging (0s)
+[ ] rekpwfe gmake@4.4.1 install (1s)
+[ ] 7whjufv roctracer-dev-api@7.2.1 install (9s)
+[ ] tsgz543 boost@1.90.0 install (37s)
+[+] rekpwfe gmake@4.4.1 /home/runner/spack/opt/spack/linux-zen4/gmake-4.4.1-rekpwfe5qjqbqluizo7xc3eo2y6ttzj5 (43s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /vkbcvycxkv33yfiba33cefqts73bo6bc # libiconv@1.18 build_system=autotools libs:=shared,static platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /skps4xeoigxjvdjeb4ji3apo4msbevaf # pkgconf@2.5.1 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /tsvewafdxry6godjvvfqysprlymzd5kn # berkeley-db@18.1.40+cxx~docs+stl build_system=autotools patches:=26090f4,b231fcc platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /3uvl7s4y4pwilsxe6mogm562sclbak2c # zlib@1.3.2+optimize+pic+shared build_system=makefile platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /nsvpbs2qghyluq5ox2kdppqo2rsuxvpi # util-macros@1.20.2 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /kpjkmshpr5iroimbhz25imumtxdhw5ve # libpthread-stubs@0.5 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qixz735q2uqy4jo63h74nk4ncpn6rajl # libmd@1.1.0 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /6jqsz7os6xyzz3uydrahszlab5mimiet # xz@5.8.3~pic build_system=autotools libs:=shared,static platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /retohgtpgutrs7pnwtbolht3jz2hjxg4 # libffi@3.5.2 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /o22k5tmlzsnyj5cypuagt5l6kixbbygy # libelf@0.8.13 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /d67d25ujinao43dzfjveuvxcqb56jv5k # libsigsegv@2.15 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /q4tkos3q5sav5tevaaupaoxlpa6r6twq # xxd-standalone@8.2.1201 build_system=makefile platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /zk72qxlquuyz5eir5zjqqjutrveiwlt4 # libyaml@0.2.5 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /fzgjuuurvsdj6wrstjrm5ttli62jnntu # pcre2@10.44~jit+multibyte+pic build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /xhe6mgu76bpm6rhezidvs7stwc6byo7w # openblas@0.3.33~bignuma~consistent_fpcsr+dynamic_dispatch+fortran~ilp64+locking+pic+shared~static build_system=makefile patches:=723ddc1 symbol_suffix=none threads=none platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qkrgm5rcxdpmzcveijynnjcaxcxaqhlj # lz4@1.10.0+pic build_system=makefile libs:=shared,static platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /giekerumjmcg6tz3k73oaj76uxqizah4 # xxhash@0.8.3 build_system=makefile platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /xgzpipohmwdtdm2x56rgjrivccv6tmgy # grep@3.12~pcre build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ygcd6x5jamv7iswmm5e6qo5uywgs4sw5 # sed@4.9 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] ygcd6x5 sed@4.9 staging (0s)
+[ ] qkrgm5r lz4@1.10.0 staging (0s)
+[ ] qixz735 libmd@1.1.0 staging (0s)
+[ ] d67d25u libsigsegv@2.15 staging (0s)
+[ ] vkbcvyc libiconv@1.18 staging (0s)
+[ ] retohgt libffi@3.5.2 staging (0s)
+[ ] xgzpipo grep@3.12 staging (0s)
+[ ] xhe6mgu openblas@0.3.33 staging (0s)
+[ ] q4tkos3 xxd-standalone@8.2.1201 staging (0s)
+[ ] tsvewaf berkeley-db@18.1.40 staging (0s)
+[ ] fzgjuuu pcre2@10.44 staging (0s)
+[ ] giekeru xxhash@0.8.3 staging (0s)
+[ ] skps4xe pkgconf@2.5.1 staging (0s)
+[ ] zk72qxl libyaml@0.2.5 staging (0s)
+[ ] o22k5tm libelf@0.8.13 staging (0s)
+[ ] 6jqsz7o xz@5.8.3 staging (0s)
+[ ] nsvpbs2 util-macros@1.20.2 staging (0s)
+[ ] 3uvl7s4 zlib@1.3.2 staging (0s)
+[ ] kpjkmsh libpthread-stubs@0.5 staging (0s)
+[ ] d67d25u libsigsegv@2.15 autoreconf (12s)
+[ ] d67d25u libsigsegv@2.15 configure (12s)
+[ ] ygcd6x5 sed@4.9 autoreconf (14s)
+[ ] ygcd6x5 sed@4.9 configure (14s)
+[ ] d67d25u libsigsegv@2.15 build (17s)
+[ ] qkrgm5r lz4@1.10.0 edit (18s)
+[ ] qkrgm5r lz4@1.10.0 build (18s)
+[ ] d67d25u libsigsegv@2.15 install (18s)
+[+] d67d25u libsigsegv@2.15 /home/runner/spack/opt/spack/linux-zen4/libsigsegv-2.15-d67d25ujinao43dzfjveuvxcqb56jv5k (18s)
+[ ] qixz735 libmd@1.1.0 autoreconf (19s)
+[ ] qixz735 libmd@1.1.0 configure (19s)
+[ ] o22k5tm libelf@0.8.13 autoreconf (21s)
+[ ] o22k5tm libelf@0.8.13 configure (21s)
+[ ] kpjkmsh libpthread-stubs@0.5 autoreconf (21s)
+[ ] kpjkmsh libpthread-stubs@0.5 configure (21s)
+[ ] vkbcvyc libiconv@1.18 autoreconf (22s)
+[ ] vkbcvyc libiconv@1.18 configure (22s)
+[ ] 3uvl7s4 zlib@1.3.2 edit (21s)
+[ ] nsvpbs2 util-macros@1.20.2 autoreconf (21s)
+[ ] nsvpbs2 util-macros@1.20.2 configure (21s)
+[ ] zk72qxl libyaml@0.2.5 autoreconf (21s)
+[ ] zk72qxl libyaml@0.2.5 configure (21s)
+[ ] giekeru xxhash@0.8.3 edit (22s)
+[ ] giekeru xxhash@0.8.3 build (22s)
+[ ] retohgt libffi@3.5.2 autoreconf (22s)
+[ ] retohgt libffi@3.5.2 configure (22s)
+[ ] fzgjuuu pcre2@10.44 autoreconf (22s)
+[ ] fzgjuuu pcre2@10.44 configure (22s)
+[ ] xgzpipo grep@3.12 autoreconf (22s)
+[ ] xgzpipo grep@3.12 configure (22s)
+[ ] 6jqsz7o xz@5.8.3 autoreconf (21s)
+[ ] 6jqsz7o xz@5.8.3 configure (21s)
+[ ] q4tkos3 xxd-standalone@8.2.1201 edit (23s)
+[ ] q4tkos3 xxd-standalone@8.2.1201 build (23s)
+[ ] q4tkos3 xxd-standalone@8.2.1201 install (23s)
+[ ] tsvewaf berkeley-db@18.1.40 autoreconf (23s)
+[ ] tsvewaf berkeley-db@18.1.40 configure (23s)
+[ ] nsvpbs2 util-macros@1.20.2 build (22s)
+[ ] nsvpbs2 util-macros@1.20.2 install (22s)
+[+] nsvpbs2 util-macros@1.20.2 /home/runner/spack/opt/spack/linux-zen4/util-macros-1.20.2-nsvpbs2qghyluq5ox2kdppqo2rsuxvpi (22s)
+[ ] giekeru xxhash@0.8.3 install (24s)
+[ ] skps4xe pkgconf@2.5.1 autoreconf (24s)
+[ ] skps4xe pkgconf@2.5.1 configure (24s)
+[ ] qkrgm5r lz4@1.10.0 install (24s)
+[ ] 3uvl7s4 zlib@1.3.2 build (32s)
+[ ] 3uvl7s4 zlib@1.3.2 install (32s)
+[ ] qixz735 libmd@1.1.0 build (37s)
+[ ] o22k5tm libelf@0.8.13 build (36s)
+[ ] kpjkmsh libpthread-stubs@0.5 build (36s)
+[ ] kpjkmsh libpthread-stubs@0.5 install (36s)
+[+] kpjkmsh libpthread-stubs@0.5 /home/runner/spack/opt/spack/linux-zen4/libpthread-stubs-0.5-kpjkmshpr5iroimbhz25imumtxdhw5ve (36s)
+[ ] qixz735 libmd@1.1.0 install (38s)
+[ ] xhe6mgu openblas@0.3.33 edit (38s)
+[ ] xhe6mgu openblas@0.3.33 build (38s)
+==> Updating view at /home/runner/rocm
+[+] qixz735 libmd@1.1.0 /home/runner/spack/opt/spack/linux-zen4/libmd-1.1.0-qixz735q2uqy4jo63h74nk4ncpn6rajl (38s)
+[+] giekeru xxhash@0.8.3 /home/runner/spack/opt/spack/linux-zen4/xxhash-0.8.3-giekerumjmcg6tz3k73oaj76uxqizah4 (40s)
+[+] qkrgm5r lz4@1.10.0 /home/runner/spack/opt/spack/linux-zen4/lz4-1.10.0-qkrgm5rcxdpmzcveijynnjcaxcxaqhlj (42s)
+[+] 7whjufv roctracer-dev-api@7.2.1 /home/runner/spack/opt/spack/linux-zen4/roctracer-dev-api-7.2.1-7whjufvy7ga2uj3j5f3c5p27ksqqz34z (1m28s)
+[ ] skps4xe pkgconf@2.5.1 build (45s)
+[ ] skps4xe pkgconf@2.5.1 install (46s)
+[+] skps4xe pkgconf@2.5.1 /home/runner/spack/opt/spack/linux-zen4/pkgconf-2.5.1-skps4xeoigxjvdjeb4ji3apo4msbevaf (46s)
+[+] 3uvl7s4 zlib@1.3.2 /home/runner/spack/opt/spack/linux-zen4/zlib-1.3.2-3uvl7s4y4pwilsxe6mogm562sclbak2c (51s)
+[ ] zk72qxl libyaml@0.2.5 build (51s)
+[ ] o22k5tm libelf@0.8.13 install (54s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /jnnlsuqb43peziwmzxycwo3hgjxlcdp7 # libbsd@0.12.2 build_system=autotools platform=linux os=rhel9 target=zen4
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /otlv5yy34l6vjmydz6tpfjqeihhacepb # ncurses@6.6~symlinks+termlib abi=none build_system=autotools patches:=7a351bc platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /aye5xuxdsp2xdgvpgfrclbsonb6t4ygk # libpciaccess@0.17 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] jnnlsuq libbsd@0.12.2 staging (0s)
+[ ] jnnlsuq libbsd@0.12.2 autoreconf (0s)
+[ ] jnnlsuq libbsd@0.12.2 configure (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /nxfkfy4dva75tqbtmvox6gpeebi5zx2o # util-linux-uuid@2.41 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] otlv5yy ncurses@6.6 staging (0s)
+[ ] aye5xux libpciaccess@0.17 staging (0s)
+[ ] nxfkfy4 util-linux-uuid@2.41 staging (0s)
+[ ] aye5xux libpciaccess@0.17 autoreconf (1s)
+[ ] aye5xux libpciaccess@0.17 configure (1s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /alhnr635ahgv4zti3fzu3dsezkxgeved # dri2proto@2.8 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] otlv5yy ncurses@6.6 autoreconf (1s)
+[ ] otlv5yy ncurses@6.6 configure (1s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /lhnzqgifh4wvmn2633owqctgg4bwzq5x # glproto@1.4.17 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] alhnr63 dri2proto@2.8 staging (0s)
+[ ] alhnr63 dri2proto@2.8 autoreconf (0s)
+[ ] alhnr63 dri2proto@2.8 configure (0s)
+[ ] lhnzqgi glproto@1.4.17 staging (0s)
+[ ] nxfkfy4 util-linux-uuid@2.41 autoreconf (2s)
+[ ] nxfkfy4 util-linux-uuid@2.41 configure (2s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /h5bcdcmnxlvajguuzw3ux7lfwmdkbseg # inputproto@2.3.2 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] lhnzqgi glproto@1.4.17 autoreconf (1s)
+[ ] lhnzqgi glproto@1.4.17 configure (1s)
+[ ] retohgt libffi@3.5.2 build (1m00s)
+[ ] h5bcdcm inputproto@2.3.2 staging (0s)
+[ ] h5bcdcm inputproto@2.3.2 autoreconf (0s)
+[ ] h5bcdcm inputproto@2.3.2 configure (0s)
+[ ] alhnr63 dri2proto@2.8 build (4s)
+[ ] alhnr63 dri2proto@2.8 install (4s)
+[+] alhnr63 dri2proto@2.8 /home/runner/spack/opt/spack/linux-zen4/dri2proto-2.8-alhnr635ahgv4zti3fzu3dsezkxgeved (4s)
+[ ] vkbcvyc libiconv@1.18 build (1m14s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /h3wwevrotrtlfcrvca33uovhiz4ldi6m # kbproto@1.0.7 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] 6jqsz7o xz@5.8.3 build (1m16s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /i54wehhox27a43hlexs7vm4ricb3wuvo # xproto@7.0.31 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] zk72qxl libyaml@0.2.5 install (1m21s)
+[+] o22k5tm libelf@0.8.13 /home/runner/spack/opt/spack/linux-zen4/libelf-0.8.13-o22k5tmlzsnyj5cypuagt5l6kixbbygy (1m21s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qitu6cvrtdsvmgi564c7lprjcmykqujl # xextproto@7.3.0 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] lhnzqgi glproto@1.4.17 build (26s)
+[ ] lhnzqgi glproto@1.4.17 install (26s)
+[+] lhnzqgi glproto@1.4.17 /home/runner/spack/opt/spack/linux-zen4/glproto-1.4.17-lhnzqgifh4wvmn2633owqctgg4bwzq5x (26s)
+[ ] retohgt libffi@3.5.2 install (1m25s)
+[+] retohgt libffi@3.5.2 /home/runner/spack/opt/spack/linux-zen4/libffi-3.5.2-retohgtpgutrs7pnwtbolht3jz2hjxg4 (1m26s)
+[ ] aye5xux libpciaccess@0.17 build (33s)
+[ ] aye5xux libpciaccess@0.17 install (35s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /iwqly6mvco2ry4e3n6cqcg25nyxxh7pp # xtrans@1.6.0 build_system=autotools platform=linux os=rhel9 target=zen4
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /vcetamyht3xw2udtgbquxtwimtvc4xx7 # renderproto@0.11.1 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /5gvaubu7iz2w5vyjibylqs6xf44c4lgs # randrproto@1.5.0 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] iwqly6m xtrans@1.6.0 staging (0s)
+[ ] vcetamy renderproto@0.11.1 staging (0s)
+[ ] h3wwevr kbproto@1.0.7 staging (0s)
+[ ] qitu6cv xextproto@7.3.0 staging (0s)
+[ ] 5gvaubu randrproto@1.5.0 staging (0s)
+[ ] i54wehh xproto@7.0.31 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /2nld7wmalxsxldjrqfdt5v3frn2nrhff # pigz@2.8 build_system=makefile platform=linux os=rhel9 target=zen4
+[ ] 2nld7wm pigz@2.8 staging (0s)
+[ ] h5bcdcm inputproto@2.3.2 build (40s)
+[ ] h5bcdcm inputproto@2.3.2 install (40s)
+[+] h5bcdcm inputproto@2.3.2 /home/runner/spack/opt/spack/linux-zen4/inputproto-2.3.2-h5bcdcmnxlvajguuzw3ux7lfwmdkbseg (40s)
+[ ] vcetamy renderproto@0.11.1 autoreconf (7s)
+[ ] vcetamy renderproto@0.11.1 configure (7s)
+[ ] iwqly6m xtrans@1.6.0 autoreconf (7s)
+[ ] iwqly6m xtrans@1.6.0 configure (7s)
+[ ] i54wehh xproto@7.0.31 autoreconf (6s)
+[ ] i54wehh xproto@7.0.31 configure (6s)
+[ ] 2nld7wm pigz@2.8 edit (2s)
+[ ] 2nld7wm pigz@2.8 build (2s)
+[ ] qitu6cv xextproto@7.3.0 autoreconf (6s)
+[ ] qitu6cv xextproto@7.3.0 configure (6s)
+[ ] 5gvaubu randrproto@1.5.0 autoreconf (6s)
+[ ] 5gvaubu randrproto@1.5.0 configure (6s)
+[ ] h3wwevr kbproto@1.0.7 autoreconf (6s)
+[ ] h3wwevr kbproto@1.0.7 configure (6s)
+[ ] ygcd6x5 sed@4.9 build (1m49s)
+[ ] fzgjuuu pcre2@10.44 build (1m51s)
+[+] zk72qxl libyaml@0.2.5 /home/runner/spack/opt/spack/linux-zen4/libyaml-0.2.5-zk72qxlquuyz5eir5zjqqjutrveiwlt4 (1m51s)
+[+] aye5xux libpciaccess@0.17 /home/runner/spack/opt/spack/linux-zen4/libpciaccess-0.17-aye5xuxdsp2xdgvpgfrclbsonb6t4ygk (57s)
+[ ] 2nld7wm pigz@2.8 install (16s)
+[ ] jnnlsuq libbsd@0.12.2 build (58s)
+[ ] 6jqsz7o xz@5.8.3 install (1m58s)
+==> Updating view at /home/runner/rocm
+==> Updating view at /home/runner/rocm
+[ ] jnnlsuq libbsd@0.12.2 install (1m07s)
+[ ] ygcd6x5 sed@4.9 install (2m07s)
+[ ] vkbcvyc libiconv@1.18 install (2m07s)
+[ ] qitu6cv xextproto@7.3.0 build (40s)
+[ ] qitu6cv xextproto@7.3.0 install (40s)
+[ ] 5gvaubu randrproto@1.5.0 build (43s)
+[ ] 5gvaubu randrproto@1.5.0 install (43s)
+[+] 5gvaubu randrproto@1.5.0 /home/runner/spack/opt/spack/linux-zen4/randrproto-1.5.0-5gvaubu7iz2w5vyjibylqs6xf44c4lgs (43s)
+[ ] i54wehh xproto@7.0.31 build (44s)
+[ ] i54wehh xproto@7.0.31 install (44s)
+[+] i54wehh xproto@7.0.31 /home/runner/spack/opt/spack/linux-zen4/xproto-7.0.31-i54wehhox27a43hlexs7vm4ricb3wuvo (44s)
+[ ] iwqly6m xtrans@1.6.0 build (47s)
+[ ] iwqly6m xtrans@1.6.0 install (47s)
+[+] iwqly6m xtrans@1.6.0 /home/runner/spack/opt/spack/linux-zen4/xtrans-1.6.0-iwqly6mvco2ry4e3n6cqcg25nyxxh7pp (47s)
+[ ] vcetamy renderproto@0.11.1 build (50s)
+[ ] vcetamy renderproto@0.11.1 install (50s)
+[+] vcetamy renderproto@0.11.1 /home/runner/spack/opt/spack/linux-zen4/renderproto-0.11.1-vcetamyht3xw2udtgbquxtwimtvc4xx7 (50s)
+[ ] h3wwevr kbproto@1.0.7 build (51s)
+[ ] h3wwevr kbproto@1.0.7 install (51s)
+[+] h3wwevr kbproto@1.0.7 /home/runner/spack/opt/spack/linux-zen4/kbproto-1.0.7-h3wwevrotrtlfcrvca33uovhiz4ldi6m (51s)
+[+] 2nld7wm pigz@2.8 /home/runner/spack/opt/spack/linux-zen4/pigz-2.8-2nld7wmalxsxldjrqfdt5v3frn2nrhff (47s)
+[+] q4tkos3 xxd-standalone@8.2.1201 /home/runner/spack/opt/spack/linux-zen4/xxd-standalone-8.2.1201-q4tkos3q5sav5tevaaupaoxlpa6r6twq (2m28s)
+[ ] tsvewaf berkeley-db@18.1.40 build (2m30s)
+[+] jnnlsuq libbsd@0.12.2 /home/runner/spack/opt/spack/linux-zen4/libbsd-0.12.2-jnnlsuqb43peziwmzxycwo3hgjxlcdp7 (1m34s)
+[+] ygcd6x5 sed@4.9 /home/runner/spack/opt/spack/linux-zen4/sed-4.9-ygcd6x5jamv7iswmm5e6qo5uywgs4sw5 (2m36s)
+[+] qitu6cv xextproto@7.3.0 /home/runner/spack/opt/spack/linux-zen4/xextproto-7.3.0-qitu6cvrtdsvmgi564c7lprjcmykqujl (1m05s)
+==> Updating view at /home/runner/rocm
+[ ] fzgjuuu pcre2@10.44 install (2m40s)
+[+] 6jqsz7o xz@5.8.3 /home/runner/spack/opt/spack/linux-zen4/xz-5.8.3-6jqsz7os6xyzz3uydrahszlab5mimiet (2m40s)
+[+] vkbcvyc libiconv@1.18 /home/runner/spack/opt/spack/linux-zen4/libiconv-1.18-vkbcvycxkv33yfiba33cefqts73bo6bc (2m44s)
+[ ] xgzpipo grep@3.12 build (2m51s)
+[ ] nxfkfy4 util-linux-uuid@2.41 build (2m12s)
+[ ] nxfkfy4 util-linux-uuid@2.41 install (2m13s)
+==> Updating view at /home/runner/rocm
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ixlvx5ulmt5ksft5jxkq2hqn7pjjte2b # expat@2.8.1+libbsd build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /m2jd6sb7wrpwuv3mektuprqa57sxxlwd # diffutils@3.12 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /mvi3opkilvsbntiw53nmane63ep4tn6i # libxml2@2.15.3+pic~python+shared build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] ixlvx5u expat@2.8.1 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /63dmk4oollexvqrfthn3qbnf5dlkcxer # libunistring@1.4.2 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /yv3wyp62dn4pnfpsmc7hyg2j743zythe # libxau@1.0.12 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] otlv5yy ncurses@6.6 build (2m15s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7ah4vhlsekadc2sc6u3lm3obyjvqeak6 # libxdmcp@1.1.5 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /n7mekdau3dsawc3oxwepppaq7lsvrsmc # libxshmfence@1.3.3 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] m2jd6sb diffutils@3.12 staging (0s)
+[ ] 63dmk4o libunistring@1.4.2 staging (0s)
+[ ] mvi3opk libxml2@2.15.3 staging (0s)
+[ ] yv3wyp6 libxau@1.0.12 staging (0s)
+[ ] n7mekda libxshmfence@1.3.3 staging (0s)
+[ ] 7ah4vhl libxdmcp@1.1.5 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /3s27fxon4ljwhhebkafeholkloxl3bmk # libice@1.1.2 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] 3s27fxo libice@1.1.2 staging (0s)
+[+] fzgjuuu pcre2@10.44 /home/runner/spack/opt/spack/linux-zen4/pcre2-10.44-fzgjuuurvsdj6wrstjrm5ttli62jnntu (3m17s)
+[ ] n7mekda libxshmfence@1.3.3 autoreconf (4s)
+[ ] n7mekda libxshmfence@1.3.3 configure (4s)
+[ ] 7ah4vhl libxdmcp@1.1.5 autoreconf (4s)
+[ ] 7ah4vhl libxdmcp@1.1.5 configure (4s)
+[ ] 3s27fxo libice@1.1.2 autoreconf (3s)
+[ ] 3s27fxo libice@1.1.2 configure (3s)
+[ ] 63dmk4o libunistring@1.4.2 autoreconf (4s)
+[ ] 63dmk4o libunistring@1.4.2 configure (4s)
+[ ] yv3wyp6 libxau@1.0.12 autoreconf (13s)
+[ ] yv3wyp6 libxau@1.0.12 configure (13s)
+[ ] ixlvx5u expat@2.8.1 autoreconf (14s)
+[ ] ixlvx5u expat@2.8.1 configure (14s)
+[ ] m2jd6sb diffutils@3.12 autoreconf (14s)
+[ ] m2jd6sb diffutils@3.12 configure (14s)
+[ ] tsvewaf berkeley-db@18.1.40 install (3m32s)
+[ ] 3s27fxo libice@1.1.2 build (53s)
+[ ] 7ah4vhl libxdmcp@1.1.5 build (54s)
+[ ] 7ah4vhl libxdmcp@1.1.5 install (56s)
+[+] 7ah4vhl libxdmcp@1.1.5 /home/runner/spack/opt/spack/linux-zen4/libxdmcp-1.1.5-7ah4vhlsekadc2sc6u3lm3obyjvqeak6 (56s)
+==> Updating view at /home/runner/rocm
+[ ] 3s27fxo libice@1.1.2 install (1m38s)
+[+] 3s27fxo libice@1.1.2 /home/runner/spack/opt/spack/linux-zen4/libice-1.1.2-3s27fxon4ljwhhebkafeholkloxl3bmk (1m39s)
+[ ] xgzpipo grep@3.12 install (4m54s)
+[ ] ixlvx5u expat@2.8.1 build (1m46s)
+[ ] yv3wyp6 libxau@1.0.12 build (2m19s)
+[ ] yv3wyp6 libxau@1.0.12 install (2m20s)
+[+] yv3wyp6 libxau@1.0.12 /home/runner/spack/opt/spack/linux-zen4/libxau-1.0.12-yv3wyp62dn4pnfpsmc7hyg2j743zythe (2m20s)
+[ ] ixlvx5u expat@2.8.1 install (2m27s)
+[+] ixlvx5u expat@2.8.1 /home/runner/spack/opt/spack/linux-zen4/expat-2.8.1-ixlvx5ulmt5ksft5jxkq2hqn7pjjte2b (2m27s)
+==> Updating view at /home/runner/rocm
+[ ] n7mekda libxshmfence@1.3.3 build (2m51s)
+[ ] n7mekda libxshmfence@1.3.3 install (2m52s)
+[+] n7mekda libxshmfence@1.3.3 /home/runner/spack/opt/spack/linux-zen4/libxshmfence-1.3.3-n7mekdau3dsawc3oxwepppaq7lsvrsmc (2m52s)
+[ ] otlv5yy ncurses@6.6 install (5m21s)
+[+] nxfkfy4 util-linux-uuid@2.41 /home/runner/spack/opt/spack/linux-zen4/util-linux-uuid-2.41-nxfkfy4dva75tqbtmvox6gpeebi5zx2o (5m27s)
+==> Updating view at /home/runner/rocm
+[+] xgzpipo grep@3.12 /home/runner/spack/opt/spack/linux-zen4/grep-3.12-xgzpipohmwdtdm2x56rgjrivccv6tmgy (6m36s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /rpotsx6gkvr2hbk5dyeeb4auh36v6jwr # libsm@1.2.6 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] rpotsx6 libsm@1.2.6 staging (0s)
+[ ] rpotsx6 libsm@1.2.6 autoreconf (3s)
+[ ] rpotsx6 libsm@1.2.6 configure (3s)
+[ ] rpotsx6 libsm@1.2.6 build (39s)
+[ ] rpotsx6 libsm@1.2.6 install (41s)
+[+] rpotsx6 libsm@1.2.6 /home/runner/spack/opt/spack/linux-zen4/libsm-1.2.6-rpotsx6gkvr2hbk5dyeeb4auh36v6jwr (41s)
+[+] tsvewaf berkeley-db@18.1.40 /home/runner/spack/opt/spack/linux-zen4/berkeley-db-18.1.40-tsvewafdxry6godjvvfqysprlymzd5kn (8m03s)
+==> Updating view at /home/runner/rocm
+[ ] mvi3opk libxml2@2.15.3 autoreconf (5m14s)
+[ ] mvi3opk libxml2@2.15.3 configure (5m14s)
+==> Updating view at /home/runner/rocm
+[ ] 63dmk4o libunistring@1.4.2 build (6m00s)
+[ ] mvi3opk libxml2@2.15.3 build (6m46s)
+[+] otlv5yy ncurses@6.6 /home/runner/spack/opt/spack/linux-zen4/ncurses-6.6-otlv5yy34l6vjmydz6tpfjqeihhacepb (9m18s)
+[ ] mvi3opk libxml2@2.15.3 install (7m09s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /zubq5qijlroa2ly3i7sjkycczbc4ssvt # readline@8.3 build_system=autotools patches:=21f0a03,72dee13,e273643 platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /wtqes2u5howoj3mbjeouixevoqlgf6jo # less@692 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /uxizr2atgx5v6nmoypikwsi7mjypj6lk # libedit@3.1-20251016 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] uxizr2a libedit@3.1-20251016 staging (0s)
+[ ] zubq5qi readline@8.3 staging (0s)
+[ ] wtqes2u less@692 staging (0s)
+[ ] uxizr2a libedit@3.1-20251016 autoreconf (17s)
+[ ] uxizr2a libedit@3.1-20251016 configure (17s)
+[ ] wtqes2u less@692 autoreconf (17s)
+[ ] wtqes2u less@692 configure (17s)
+[ ] m2jd6sb diffutils@3.12 build (8m08s)
+[ ] zubq5qi readline@8.3 autoreconf (1m15s)
+[ ] zubq5qi readline@8.3 configure (1m15s)
+[ ] m2jd6sb diffutils@3.12 install (8m54s)
+[ ] wtqes2u less@692 build (1m37s)
+[ ] wtqes2u less@692 install (1m37s)
+[ ] uxizr2a libedit@3.1-20251016 build (1m45s)
+[+] wtqes2u less@692 /home/runner/spack/opt/spack/linux-zen4/less-692-wtqes2u5howoj3mbjeouixevoqlgf6jo (2m00s)
+==> Updating view at /home/runner/rocm
+[ ] uxizr2a libedit@3.1-20251016 install (2m38s)
+[+] uxizr2a libedit@3.1-20251016 /home/runner/spack/opt/spack/linux-zen4/libedit-3.1-20251016-uxizr2atgx5v6nmoypikwsi7mjypj6lk (2m39s)
+[ ] zubq5qi readline@8.3 build (3m07s)
+==> Updating view at /home/runner/rocm
+[+] m2jd6sb diffutils@3.12 /home/runner/spack/opt/spack/linux-zen4/diffutils-3.12-m2jd6sb7wrpwuv3mektuprqa57sxxlwd (10m44s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /sopwhpesbyu46nq2voafgvzrezlqb2ak # nghttp2@1.67.1 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ckopqqnzcbi753snhqloxj2bgfxfukat # bzip2@1.0.8~debug~pic+shared build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7p4iph3gmbujrmdqeczshcbfsyvhsr67 # m4@1.4.21+sigsegv build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] sopwhpe nghttp2@1.67.1 staging (0s)
+[ ] ckopqqn bzip2@1.0.8 staging (0s)
+[ ] 7p4iph3 m4@1.4.21 staging (0s)
+[ ] ckopqqn bzip2@1.0.8 install (0s)
+[ ] 7p4iph3 m4@1.4.21 autoreconf (1s)
+[ ] 7p4iph3 m4@1.4.21 configure (1s)
+[ ] zubq5qi readline@8.3 install (3m35s)
+[+] zubq5qi readline@8.3 /home/runner/spack/opt/spack/linux-zen4/readline-8.3-zubq5qijlroa2ly3i7sjkycczbc4ssvt (3m36s)
+[ ] sopwhpe nghttp2@1.67.1 autoreconf (20s)
+[ ] sopwhpe nghttp2@1.67.1 configure (20s)
+[+] ckopqqn bzip2@1.0.8 /home/runner/spack/opt/spack/linux-zen4/bzip2-1.0.8-ckopqqnzcbi753snhqloxj2bgfxfukat (21s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /to5gjp7vteuyfrt7dkafs7ef4r24aptr # gdbm@1.26 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] 63dmk4o libunistring@1.4.2 install (11m23s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /i2elx43bshwvlimy3wkwijln46cmmgc3 # sqlite@3.53.1+column_metadata+fts+rtree build_system=autotools platform=linux os=rhel9 target=zen4
+[+] mvi3opk libxml2@2.15.3 /home/runner/spack/opt/spack/linux-zen4/libxml2-2.15.3-mvi3opkilvsbntiw53nmane63ep4tn6i (12m01s)
+[ ] sopwhpe nghttp2@1.67.1 build (1m30s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /z7jgdfwtxciduqehxfnwbr5veyvxyvlr # tar@1.35 build_system=autotools zip=pigz platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /5mqwg5peuagsn5zzr5mct3u2ys5za7go # file@5.46+static build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] z7jgdfw tar@1.35 staging (0s)
+[ ] z7jgdfw tar@1.35 autoreconf (12s)
+[ ] z7jgdfw tar@1.35 configure (12s)
+[ ] sopwhpe nghttp2@1.67.1 install (2m06s)
+==> Updating view at /home/runner/rocm
+[ ] 5mqwg5p file@5.46 staging (0s)
+[ ] i2elx43 sqlite@3.53.1 staging (0s)
+[ ] to5gjp7 gdbm@1.26 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7wwbeapa2d7g7vmuekqkbwdbxupzgs5h # hwloc@2.13.0~cairo~cuda~gl~level_zero~libudev+libxml2~nvml~opencl+pci~rocm build_system=autotools libs:=shared,static patches:=b4db98b platform=linux os=rhel9 target=zen4
+[ ] 7wwbeap hwloc@2.13.0 staging (0s)
+[ ] 7wwbeap hwloc@2.13.0 autoreconf (11s)
+[ ] 7wwbeap hwloc@2.13.0 configure (11s)
+[+] sopwhpe nghttp2@1.67.1 /home/runner/spack/opt/spack/linux-zen4/nghttp2-1.67.1-sopwhpesbyu46nq2voafgvzrezlqb2ak (2m53s)
+[+] 63dmk4o libunistring@1.4.2 /home/runner/spack/opt/spack/linux-zen4/libunistring-1.4.2-63dmk4oollexvqrfthn3qbnf5dlkcxer (13m40s)
+[ ] 5mqwg5p file@5.46 autoreconf (42s)
+[ ] 5mqwg5p file@5.46 configure (42s)
+[ ] i2elx43 sqlite@3.53.1 autoreconf (42s)
+[ ] i2elx43 sqlite@3.53.1 configure (42s)
+[ ] i2elx43 sqlite@3.53.1 build (1m07s)
+[ ] to5gjp7 gdbm@1.26 autoreconf (1m11s)
+[ ] to5gjp7 gdbm@1.26 configure (1m11s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7jxg5ucdzoqzoindadc5cncllnafbpf5 # libidn2@2.3.8 build_system=autotools platform=linux os=rhel9 target=zen4
+[+] se5uyg2 go-bootstrap@1.24.13 /home/runner/spack/opt/spack/linux-zen4/go-bootstrap-1.24.13-se5uyg27xa4kypiwe3b6etbvlrzp5w7y (18m32s)
+[ ] 7jxg5uc libidn2@2.3.8 staging (0s)
+[ ] 7jxg5uc libidn2@2.3.8 autoreconf (0s)
+[ ] 7jxg5uc libidn2@2.3.8 configure (0s)
+[ ] 5mqwg5p file@5.46 build (1m27s)
+[ ] 7wwbeap hwloc@2.13.0 build (1m22s)
+[ ] 7wwbeap hwloc@2.13.0 install (1m29s)
+[ ] 5mqwg5p file@5.46 install (1m47s)
+[ ] i2elx43 sqlite@3.53.1 install (1m50s)
+[+] i2elx43 sqlite@3.53.1 /home/runner/spack/opt/spack/linux-zen4/sqlite-3.53.1-i2elx43bshwvlimy3wkwijln46cmmgc3 (1m50s)
+[ ] 7p4iph3 m4@1.4.21 build (4m22s)
+[ ] to5gjp7 gdbm@1.26 build (1m57s)
+[ ] to5gjp7 gdbm@1.26 install (2m01s)
+[+] to5gjp7 gdbm@1.26 /home/runner/spack/opt/spack/linux-zen4/gdbm-1.26-to5gjp7vteuyfrt7dkafs7ef4r24aptr (2m02s)
+[ ] 7p4iph3 m4@1.4.21 install (4m30s)
+[+] 5mqwg5p file@5.46 /home/runner/spack/opt/spack/linux-zen4/file-5.46-5mqwg5peuagsn5zzr5mct3u2ys5za7go (2m21s)
+==> Updating view at /home/runner/rocm
+[+] 7wwbeap hwloc@2.13.0 /home/runner/spack/opt/spack/linux-zen4/hwloc-2.13.0-7wwbeapa2d7g7vmuekqkbwdbxupzgs5h (2m32s)
+[ ] 7jxg5uc libidn2@2.3.8 build (1m26s)
+[ ] 7jxg5uc libidn2@2.3.8 install (1m47s)
+[+] 7p4iph3 m4@1.4.21 /home/runner/spack/opt/spack/linux-zen4/m4-1.4.21-7p4iph3gmbujrmdqeczshcbfsyvhsr67 (5m37s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7zyltn4cav4huishvwah6wfpl24mdjjg # perl@5.42.0+cpanm+opcode+open+shared+threads build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /lqdc767dw4fjofq2gavqxesnwwhlrjxe # bison@3.8.2~color build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] 7zyltn4 perl@5.42.0 staging (0s)
+[ ] lqdc767 bison@3.8.2 staging (0s)
+[ ] lqdc767 bison@3.8.2 autoreconf (1s)
+[ ] lqdc767 bison@3.8.2 configure (1s)
+[ ] 7zyltn4 perl@5.42.0 configure (1s)
+[+] 7jxg5uc libidn2@2.3.8 /home/runner/spack/opt/spack/linux-zen4/libidn2-2.3.8-7jxg5ucdzoqzoindadc5cncllnafbpf5 (2m28s)
+[ ] lqdc767 bison@3.8.2 build (2m08s)
+[ ] lqdc767 bison@3.8.2 install (2m09s)
+[ ] z7jgdfw tar@1.35 build (6m41s)
+[ ] z7jgdfw tar@1.35 install (6m56s)
+[+] lqdc767 bison@3.8.2 /home/runner/spack/opt/spack/linux-zen4/bison-3.8.2-lqdc767dw4fjofq2gavqxesnwwhlrjxe (2m29s)
+[+] z7jgdfw tar@1.35 /home/runner/spack/opt/spack/linux-zen4/tar-1.35-z7jgdfwtxciduqehxfnwbr5veyvxyvlr (7m36s)
+[ ] xhe6mgu openblas@0.3.33 install (23m07s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /2z7fe4t2k4w4rvie5c6n2ahh2ztmexfm # gettext@1.0+bzip2+curses+git~libunistring+libxml2+pic+shared+tar+xz build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] 2z7fe4t gettext@1.0 staging (0s)
+[ ] 2z7fe4t gettext@1.0 autoreconf (14s)
+[ ] 2z7fe4t gettext@1.0 configure (14s)
+[ ] 7zyltn4 perl@5.42.0 build (6m13s)
+[ ] 7zyltn4 perl@5.42.0 install (7m22s)
+[+] xhe6mgu openblas@0.3.33 /home/runner/spack/opt/spack/linux-zen4/openblas-0.3.33-xhe6mgu76bpm6rhezidvs7stwc6byo7w (28m38s)
+==> Updating view at /home/runner/rocm
+[+] 7zyltn4 perl@5.42.0 /home/runner/spack/opt/spack/linux-zen4/perl-5.42.0-7zyltn4cav4huishvwah6wfpl24mdjjg (10m46s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /delhree5nxnrlel2ycpge7mc6warik7a # openssl@3.6.1~docs+shared build_system=generic certs=mozilla platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /lphpldqieufc5wbf5yokz44kq4t3ga3e # libxcrypt@4.5.2~obsolete_api build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /royfhwmkkmgz6qnx5f2u7k3ecuv4fcud # autoconf@2.72 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /jkamavgbtbhvgkx4jzwcrjdcrtspnmwg # perl-file-which@1.27 build_system=perl platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /tprzcqlryo42yhva62dg4opwu6ct5iwm # perl-module-build@0.4234 build_system=perl platform=linux os=rhel9 target=zen4
+[ ] royfhwm autoconf@2.72 staging (0s)
+[ ] tprzcql perl-module-build@0.4234 staging (0s)
+[ ] lphpldq libxcrypt@4.5.2 staging (0s)
+[ ] jkamavg perl-file-which@1.27 staging (0s)
+[ ] delhree openssl@3.6.1 staging (0s)
+[ ] tprzcql perl-module-build@0.4234 configure (1s)
+[ ] lphpldq libxcrypt@4.5.2 autoreconf (1s)
+[ ] lphpldq libxcrypt@4.5.2 configure (1s)
+[ ] tprzcql perl-module-build@0.4234 build (1s)
+[ ] royfhwm autoconf@2.72 autoreconf (1s)
+[ ] royfhwm autoconf@2.72 configure (1s)
+[ ] jkamavg perl-file-which@1.27 configure (1s)
+[ ] jkamavg perl-file-which@1.27 build (1s)
+[ ] jkamavg perl-file-which@1.27 install (1s)
+[ ] tprzcql perl-module-build@0.4234 install (1s)
+[+] jkamavg perl-file-which@1.27 /home/runner/spack/opt/spack/linux-zen4/perl-file-which-1.27-jkamavgbtbhvgkx4jzwcrjdcrtspnmwg (1s)
+[ ] royfhwm autoconf@2.72 build (2s)
+[ ] royfhwm autoconf@2.72 install (2s)
+[ ] delhree openssl@3.6.1 install (3s)
+[+] royfhwm autoconf@2.72 /home/runner/spack/opt/spack/linux-zen4/autoconf-2.72-royfhwmkkmgz6qnx5f2u7k3ecuv4fcud (20s)
+[+] tprzcql perl-module-build@0.4234 /home/runner/spack/opt/spack/linux-zen4/perl-module-build-0.4234-tprzcqlryo42yhva62dg4opwu6ct5iwm (37s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7huqc4krhqir5qtpy4kccrttl535vj42 # perl-uri-encode@1.1.1 build_system=perl platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /fatxyd3lsaxu67jida2onysbzxcdisxh # automake@1.18.1 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] 7huqc4k perl-uri-encode@1.1.1 staging (0s)
+[ ] fatxyd3 automake@1.18.1 staging (0s)
+[ ] 7huqc4k perl-uri-encode@1.1.1 configure (6s)
+[ ] 7huqc4k perl-uri-encode@1.1.1 build (6s)
+[ ] 7huqc4k perl-uri-encode@1.1.1 install (6s)
+[+] 7huqc4k perl-uri-encode@1.1.1 /home/runner/spack/opt/spack/linux-zen4/perl-uri-encode-1.1.1-7huqc4krhqir5qtpy4kccrttl535vj42 (6s)
+[ ] fatxyd3 automake@1.18.1 autoreconf (5s)
+[ ] fatxyd3 automake@1.18.1 configure (5s)
+[ ] lphpldq libxcrypt@4.5.2 build (1m14s)
+[+] tsgz543 boost@1.90.0 /home/runner/spack/opt/spack/linux-zen4/boost-1.90.0-tsgz5434b45glb5zrz5efuuu7jivyc42 (33m04s)
+[ ] fatxyd3 automake@1.18.1 build (20s)
+[ ] fatxyd3 automake@1.18.1 install (20s)
+[ ] lphpldq libxcrypt@4.5.2 install (1m36s)
+[+] lphpldq libxcrypt@4.5.2 /home/runner/spack/opt/spack/linux-zen4/libxcrypt-4.5.2-lphpldqieufc5wbf5yokz44kq4t3ga3e (1m44s)
+[+] fatxyd3 automake@1.18.1 /home/runner/spack/opt/spack/linux-zen4/automake-1.18.1-fatxyd3lsaxu67jida2onysbzxcdisxh (41s)
+==> Updating view at /home/runner/rocm
+==> Updating view at /home/runner/rocm
+[+] delhree openssl@3.6.1 /home/runner/spack/opt/spack/linux-zen4/openssl-3.6.1-delhree5nxnrlel2ycpge7mc6warik7a (2m53s)
+[ ] 2z7fe4t gettext@1.0 build (10m21s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /gtulshgcjhxv3vbc5kvmjtot5yydbxwh # curl@8.20.0~gssapi~ldap~libidn2~librtmp~libssh~libssh2+nghttp2 build_system=autotools libs:=shared,static tls:=openssl platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /af32c5l44lvrvwptn5in44xthpxxlwnx # libevent@2.1.12+openssl build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] af32c5l libevent@2.1.12 staging (0s)
+[ ] gtulshg curl@8.20.0 staging (0s)
+[ ] af32c5l libevent@2.1.12 autoreconf (0s)
+[ ] af32c5l libevent@2.1.12 configure (0s)
+[ ] gtulshg curl@8.20.0 autoreconf (1s)
+[ ] gtulshg curl@8.20.0 configure (1s)
+[ ] af32c5l libevent@2.1.12 build (39s)
+[ ] gtulshg curl@8.20.0 build (55s)
+[ ] af32c5l libevent@2.1.12 install (55s)
+[+] af32c5l libevent@2.1.12 /home/runner/spack/opt/spack/linux-zen4/libevent-2.1.12-af32c5l44lvrvwptn5in44xthpxxlwnx (56s)
+==> Updating view at /home/runner/rocm
+[ ] gtulshg curl@8.20.0 install (1m30s)
+[+] gtulshg curl@8.20.0 /home/runner/spack/opt/spack/linux-zen4/curl-8.20.0-gtulshgcjhxv3vbc5kvmjtot5yydbxwh (1m57s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /aecrwmzb5yzbqnie4wz3jcyabfe6lqmj # cmake@3.31.11~doc+ncurses+ownlibs~qtgui build_system=generic build_type=Release platform=linux os=rhel9 target=zen4
+[ ] aecrwmz cmake@3.31.11 staging (0s)
+[ ] aecrwmz cmake@3.31.11 bootstrap (2s)
+[ ] 2z7fe4t gettext@1.0 install (15m53s)
+[ ] aecrwmz cmake@3.31.11 build (5m20s)
+[+] 2z7fe4t gettext@1.0 /home/runner/spack/opt/spack/linux-zen4/gettext-1.0-2z7fe4t2k4w4rvie5c6n2ahh2ztmexfm (19m33s)
+[ ] aecrwmz cmake@3.31.11 install (6m41s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ufopikconqvh2aamaznbm424x5qvx63l # python@3.12.13+bz2+crypt+ctypes+dbm~debug+libxml2+lzma~optimizations+pic+pyexpat+pythoncmd+readline+shared+sqlite3+ssl~static~tests~tkinter+uuid+zlib build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /fgbbwex6f7nf3trj362tgf2hbhmew7vz # findutils@4.10.0 build_system=autotools patches:=440b954 platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /dzozzpajdixhgejfuohuif4q6ijngytb # elfutils@0.194~debuginfod+exeprefix+nls build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] fgbbwex findutils@4.10.0 staging (0s)
+[ ] dzozzpa elfutils@0.194 staging (0s)
+[ ] ufopikc python@3.12.13 staging (0s)
+[ ] fgbbwex findutils@4.10.0 autoreconf (2s)
+[ ] fgbbwex findutils@4.10.0 configure (2s)
+[ ] dzozzpa elfutils@0.194 autoreconf (3s)
+[ ] dzozzpa elfutils@0.194 configure (3s)
+[ ] ufopikc python@3.12.13 configure (3s)
+[ ] dzozzpa elfutils@0.194 build (18s)
+[ ] ufopikc python@3.12.13 build (1m12s)
+[ ] fgbbwex findutils@4.10.0 build (1m19s)
+[ ] dzozzpa elfutils@0.194 install (1m40s)
+[ ] fgbbwex findutils@4.10.0 install (1m50s)
+[ ] ufopikc python@3.12.13 install (1m51s)
+[+] dzozzpa elfutils@0.194 /home/runner/spack/opt/spack/linux-zen4/elfutils-0.194-dzozzpajdixhgejfuohuif4q6ijngytb (2m21s)
+[+] fgbbwex findutils@4.10.0 /home/runner/spack/opt/spack/linux-zen4/findutils-4.10.0-fgbbwex6f7nf3trj362tgf2hbhmew7vz (2m24s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /yihehlqrpu7hg33dnf2svh4n4zpuoxxm # libtool@2.5.4 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7fnep4g6xtegr57ndewofbzfc3575hja # flex@2.6.3+lex~nls build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /sjyz7ghfba4afawmm2kkb7waodtvq7ad # krb5@1.22.2+shared build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] 7fnep4g flex@2.6.3 staging (0s)
+[ ] yihehlq libtool@2.5.4 staging (0s)
+[ ] sjyz7gh krb5@1.22.2 staging (0s)
+[ ] yihehlq libtool@2.5.4 autoreconf (5s)
+[ ] yihehlq libtool@2.5.4 configure (5s)
+[ ] 7fnep4g flex@2.6.3 autoreconf (6s)
+[ ] 7fnep4g flex@2.6.3 configure (6s)
+[ ] sjyz7gh krb5@1.22.2 autoreconf (6s)
+[ ] sjyz7gh krb5@1.22.2 configure (6s)
+[ ] yihehlq libtool@2.5.4 build (17s)
+[+] ufopikc python@3.12.13 /home/runner/spack/opt/spack/linux-zen4/python-3.12.13-ufopikconqvh2aamaznbm424x5qvx63l (3m11s)
+[ ] yihehlq libtool@2.5.4 install (25s)
+[ ] 7fnep4g flex@2.6.3 build (27s)
+[ ] 7fnep4g flex@2.6.3 install (29s)
+[+] 7fnep4g flex@2.6.3 /home/runner/spack/opt/spack/linux-zen4/flex-2.6.3-7fnep4g6xtegr57ndewofbzfc3575hja (29s)
+[+] yihehlq libtool@2.5.4 /home/runner/spack/opt/spack/linux-zen4/libtool-2.5.4-yihehlqrpu7hg33dnf2svh4n4zpuoxxm (30s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /zkalq5an4lytph4wud3aimwpkhtg6jh4 # re2c@4.4 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /tb24u3xbtaue4kxdj7kkxz3ifsf7uz3d # python-venv@1.0 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ffr2utqwnxs4bt4np67ddeoimoasib4y # numactl@2.0.19 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /gwjqafagkea243nraohsub6titbqedgo # libunwind@1.8.3~block_signals~conservative_checks~cxx_exceptions~debug~debug_frame+docs~pic+tests+weak_backtrace~xz~zlib build_system=autotools components:=none libs:=shared,static patches:=4562c23 platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /6v6dyscb5re5wfqooam6ykc5revjjazx # procps@4.0.6+nls build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /fbwjtocut2ujuet3n6dtblvdjnuzmymd # pmix@6.1.0~munge~python build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qnjbana63yeasbidcmi5a4ctzv2ebqbs # bash@5.3 build_system=autotools patches:=097cd72,1f60843,29119ad,9591d24,c0976bb,cca1ef5,e385548,eee30fe,f245d9c platform=linux os=rhel9 target=zen4
+[ ] tb24u3x python-venv@1.0 staging (0s)
+[ ] tb24u3x python-venv@1.0 install (0s)
+[ ] zkalq5a re2c@4.4 staging (0s)
+[+] tb24u3x python-venv@1.0 /home/runner/spack/opt/spack/linux-zen4/python-venv-1.0-tb24u3xbtaue4kxdj7kkxz3ifsf7uz3d (0s)
+[ ] gwjqafa libunwind@1.8.3 staging (0s)
+[ ] 6v6dysc procps@4.0.6 staging (0s)
+[ ] qnjbana bash@5.3 staging (0s)
+[ ] fbwjtoc pmix@6.1.0 staging (0s)
+[ ] ffr2utq numactl@2.0.19 staging (0s)
+[ ] ffr2utq numactl@2.0.19 autoreconf (3s)
+[ ] 6v6dysc procps@4.0.6 autoreconf (3s)
+[ ] gwjqafa libunwind@1.8.3 autoreconf (3s)
+[ ] gwjqafa libunwind@1.8.3 configure (3s)
+[ ] zkalq5a re2c@4.4 autoreconf (3s)
+[ ] zkalq5a re2c@4.4 configure (3s)
+[ ] fbwjtoc pmix@6.1.0 autoreconf (4s)
+[ ] fbwjtoc pmix@6.1.0 configure (4s)
+[ ] qnjbana bash@5.3 autoreconf (5s)
+[ ] qnjbana bash@5.3 configure (5s)
+[ ] sjyz7gh krb5@1.22.2 build (55s)
+[ ] 6v6dysc procps@4.0.6 configure (14s)
+[ ] ffr2utq numactl@2.0.19 configure (16s)
+[ ] zkalq5a re2c@4.4 build (17s)
+[ ] 6v6dysc procps@4.0.6 build (26s)
+[ ] ffr2utq numactl@2.0.19 build (30s)
+[ ] gwjqafa libunwind@1.8.3 build (37s)
+[ ] ffr2utq numactl@2.0.19 install (43s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /mnmnndr6r6vsuvkkisq23reqlitz7vky # py-pip@26.1.2 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /37iibffg5mssboartfc2iin3gnmblkuw # xcb-proto@1.17.0 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] gwjqafa libunwind@1.8.3 install (49s)
+[ ] mnmnndr py-pip@26.1.2 staging (0s)
+[ ] 37iibff xcb-proto@1.17.0 staging (0s)
+[ ] 37iibff xcb-proto@1.17.0 autoreconf (0s)
+[ ] 37iibff xcb-proto@1.17.0 configure (0s)
+[ ] mnmnndr py-pip@26.1.2 install (0s)
+[ ] 37iibff xcb-proto@1.17.0 build (1s)
+[ ] 37iibff xcb-proto@1.17.0 install (1s)
+[+] ffr2utq numactl@2.0.19 /home/runner/spack/opt/spack/linux-zen4/numactl-2.0.19-ffr2utqwnxs4bt4np67ddeoimoasib4y (56s)
+[ ] 6v6dysc procps@4.0.6 install (56s)
+[ ] sjyz7gh krb5@1.22.2 install (1m55s)
+[ ] zkalq5a re2c@4.4 install (1m13s)
+[+] 6v6dysc procps@4.0.6 /home/runner/spack/opt/spack/linux-zen4/procps-4.0.6-6v6dyscb5re5wfqooam6ykc5revjjazx (1m13s)
+[+] 37iibff xcb-proto@1.17.0 /home/runner/spack/opt/spack/linux-zen4/xcb-proto-1.17.0-37iibffg5mssboartfc2iin3gnmblkuw (25s)
+[+] mnmnndr py-pip@26.1.2 /home/runner/spack/opt/spack/linux-zen4/py-pip-26.1.2-mnmnndr6r6vsuvkkisq23reqlitz7vky (25s)
+[+] gwjqafa libunwind@1.8.3 /home/runner/spack/opt/spack/linux-zen4/libunwind-1.8.3-gwjqafagkea243nraohsub6titbqedgo (1m20s)
+==> Updating view at /home/runner/rocm
+[+] zkalq5a re2c@4.4 /home/runner/spack/opt/spack/linux-zen4/re2c-4.4-zkalq5an4lytph4wud3aimwpkhtg6jh4 (1m59s)
+[ ] fbwjtoc pmix@6.1.0 build (2m03s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /pb3zixa3rp63esafhfsl3yrujlbfnrmf # py-setuptools@82.0.1 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /reechsbbgd7uv3qxbps4wvvrs4zfmuu7 # py-wheel@0.45.1 build_system=generic platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /5x6chzbnuaphy3rqcpvyyspitjzou5bz # ninja@1.13.2+re2c build_system=generic platform=linux os=rhel9 target=zen4
+[ ] reechsb py-wheel@0.45.1 staging (0s)
+[ ] pb3zixa py-setuptools@82.0.1 staging (0s)
+[ ] 5x6chzb ninja@1.13.2 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /flcve4vea2tsakty4x2qiw3nb5kby7ug # libxcb@1.17.0 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] flcve4v libxcb@1.17.0 staging (1s)
+[+] sjyz7gh krb5@1.22.2 /home/runner/spack/opt/spack/linux-zen4/krb5-1.22.2-sjyz7ghfba4afawmm2kkb7waodtvq7ad (2m57s)
+[ ] reechsb py-wheel@0.45.1 install (9s)
+[ ] flcve4v libxcb@1.17.0 autoreconf (8s)
+[ ] flcve4v libxcb@1.17.0 configure (8s)
+[ ] pb3zixa py-setuptools@82.0.1 install (9s)
+[ ] 5x6chzb ninja@1.13.2 configure (10s)
+[+] reechsb py-wheel@0.45.1 /home/runner/spack/opt/spack/linux-zen4/py-wheel-0.45.1-reechsbbgd7uv3qxbps4wvvrs4zfmuu7 (10s)
+[ ] qnjbana bash@5.3 build (2m18s)
+[+] aecrwmz cmake@3.31.11 /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj (13m00s)
+==> Updating view at /home/runner/rocm
+[+] pb3zixa py-setuptools@82.0.1 /home/runner/spack/opt/spack/linux-zen4/py-setuptools-82.0.1-pb3zixa3rp63esafhfsl3yrujlbfnrmf (28s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ghty3zisqe5nul3r6ban26pfwpnseucq # openssh@10.3p1+gssapi build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] qnjbana bash@5.3 install (2m36s)
+[ ] flcve4v libxcb@1.17.0 build (34s)
+[ ] flcve4v libxcb@1.17.0 install (42s)
+[ ] 5x6chzb ninja@1.13.2 install (44s)
+[+] qnjbana bash@5.3 /home/runner/spack/opt/spack/linux-zen4/bash-5.3-qnjbana63yeasbidcmi5a4ctzv2ebqbs (2m53s)
+[+] 5x6chzb ninja@1.13.2 /home/runner/spack/opt/spack/linux-zen4/ninja-1.13.2-5x6chzbnuaphy3rqcpvyyspitjzou5bz (49s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qmwtxbupcusnbcgld34xu3ml53atkp3h # z3@4.15.4~gmp~ipo~python build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ze6hgi4wnynzii7xzayb2pcdfgr3teiu # rocm-core@7.2.1~asan~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qwfz262lneuyw7bqv5pakqvigeria5h5 # hipcc@7.2.1~ipo build_system=cmake build_type=Release generator=make patches:=1b049ea platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /hmmszjjm5f2tdwilucthfajaim3coogr # fmt@12.1.0~ipo+pic~shared build_system=cmake build_type=Release cxxstd=11 generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /2mip7tbyp7vb4t7sdc55drycirw5hklw # gflags@2.2.2~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /2fqrbj6tcedxq2evxqyfttuz3s42gp4z # googletest@1.17.0~absl+gmock~ipo+pthreads+shared build_system=cmake build_type=Release cxxstd=17 generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /pow44lybpuuv7fsas7uod5yb2qpkbdt4 # hipblas-common@7.2.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /jgaqvrrupzh7upwpzkv7u5vclj7fisc6 # msgpack-c@3.1.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ut6f4unhhghu3ywss6u7ijgmarlfeevz # metis@5.1.0~gdb~int64~ipo~no_warning~real64+shared build_system=cmake build_type=Release generator=make patches:=4991da9,93a7903,b1225da platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /5vma2prujaykznilr5vzfw2nbc46j7h5 # snappy@1.2.1~ipo+pic+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /tat4zezxnrdjuz3a6s27n3duskdaq5sp # libaec@1.1.4~ipo+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /p6dgbinzyyqvcw3bxtzp3kbxzonelyuk # superlu@5.3.0+fortran~ipo+pic build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /6qvaa4f5et5m4typtfhk2zlkgmsuni6u # hiredis@1.1.0~ipo~ssl~test~test_async~test_ssl build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7xy2tpoyjboeehmp7rtpneziepikumzd # span-lite@0.11.0~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /tb5exqbmxsqfg7ohtuhyrxhxi6bzqsiq # go@1.26.4 build_system=generic platform=linux os=rhel9 target=zen4
+[ ] 2fqrbj6 googletest@1.17.0 staging (0s)
+[ ] qmwtxbu z3@4.15.4 staging (0s)
+[ ] 6qvaa4f hiredis@1.1.0 staging (0s)
+[ ] 5vma2pr snappy@1.2.1 staging (0s)
+[ ] jgaqvrr msgpack-c@3.1.1 staging (0s)
+[ ] qwfz262 hipcc@7.2.1 staging (0s)
+[ ] pow44ly hipblas-common@7.2.1 staging (0s)
+[ ] tb5exqb go@1.26.4 staging (0s)
+[ ] 6qvaa4f hiredis@1.1.0 cmake (1s)
+[ ] ze6hgi4 rocm-core@7.2.1 staging (0s)
+[ ] 5vma2pr snappy@1.2.1 cmake (1s)
+[ ] 2fqrbj6 googletest@1.17.0 cmake (1s)
+[ ] 7xy2tpo span-lite@0.11.0 staging (0s)
+[ ] ut6f4un metis@5.1.0 staging (0s)
+[ ] 6qvaa4f hiredis@1.1.0 build (1s)
+[ ] p6dgbin superlu@5.3.0 staging (0s)
+[ ] tat4zez libaec@1.1.4 staging (0s)
+[ ] 7xy2tpo span-lite@0.11.0 cmake (0s)
+[ ] 2fqrbj6 googletest@1.17.0 build (7s)
+[ ] 7xy2tpo span-lite@0.11.0 build (8s)
+[ ] 7xy2tpo span-lite@0.11.0 install (8s)
+[+] 7xy2tpo span-lite@0.11.0 /home/runner/spack/opt/spack/linux-zen4/span-lite-0.11.0-7xy2tpoyjboeehmp7rtpneziepikumzd (8s)
+[ ] hmmszjj fmt@12.1.0 staging (9s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /smrko65l3bhmps76zqataa2mvbv3zzec # py-markupsafe@3.0.3 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] qmwtxbu z3@4.15.4 cmake (11s)
+[ ] ze6hgi4 rocm-core@7.2.1 cmake (10s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /hqx23unuzympm3lbv24f34spt3d6rkcf # py-flit-core@3.12.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qkpvyua4q2rfwxycfm2mgrjjr7vlbmvi # py-cython@3.2.4 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] tat4zez libaec@1.1.4 cmake (10s)
+[ ] 2mip7tb gflags@2.2.2 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /3nmnaym3dp2dblefhsexaxozly6uvegk # py-ply@3.11 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] 2mip7tb gflags@2.2.2 cmake (1s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /st7mf47mesffqugkflmiktj6bydsgyvo # py-joblib@1.5.3 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] 6qvaa4f hiredis@1.1.0 install (14s)
+[+] 6qvaa4f hiredis@1.1.0 /home/runner/spack/opt/spack/linux-zen4/hiredis-1.1.0-6qvaa4f5et5m4typtfhk2zlkgmsuni6u (14s)
+[ ] p6dgbin superlu@5.3.0 cmake (16s)
+[ ] p6dgbin superlu@5.3.0 build (17s)
+[ ] tb5exqb go@1.26.4 build (17s)
+[ ] 2fqrbj6 googletest@1.17.0 install (19s)
+[ ] jgaqvrr msgpack-c@3.1.1 cmake (20s)
+[ ] ut6f4un metis@5.1.0 cmake (21s)
+[ ] ut6f4un metis@5.1.0 build (22s)
+[ ] ze6hgi4 rocm-core@7.2.1 build (22s)
+[ ] ze6hgi4 rocm-core@7.2.1 install (22s)
+[ ] hmmszjj fmt@12.1.0 cmake (29s)
+[ ] hmmszjj fmt@12.1.0 build (29s)
+[ ] 5vma2pr snappy@1.2.1 build (32s)
+[ ] 5vma2pr snappy@1.2.1 install (33s)
+[ ] hmmszjj fmt@12.1.0 install (32s)
+[+] 5vma2pr snappy@1.2.1 /home/runner/spack/opt/spack/linux-zen4/snappy-1.2.1-5vma2prujaykznilr5vzfw2nbc46j7h5 (33s)
+[+] hmmszjj fmt@12.1.0 /home/runner/spack/opt/spack/linux-zen4/fmt-12.1.0-hmmszjjm5f2tdwilucthfajaim3coogr (33s)
+[ ] tat4zez libaec@1.1.4 build (33s)
+[+] 2fqrbj6 googletest@1.17.0 /home/runner/spack/opt/spack/linux-zen4/googletest-1.17.0-2fqrbj6tcedxq2evxqyfttuz3s42gp4z (36s)
+[ ] tat4zez libaec@1.1.4 install (36s)
+[+] tat4zez libaec@1.1.4 /home/runner/spack/opt/spack/linux-zen4/libaec-1.1.4-tat4zezxnrdjuz3a6s27n3duskdaq5sp (36s)
+[ ] jgaqvrr msgpack-c@3.1.1 build (38s)
+[ ] pow44ly hipblas-common@7.2.1 cmake (45s)
+[ ] pow44ly hipblas-common@7.2.1 build (47s)
+[ ] pow44ly hipblas-common@7.2.1 install (47s)
+[ ] qwfz262 hipcc@7.2.1 cmake (48s)
+[+] flcve4v libxcb@1.17.0 /home/runner/spack/opt/spack/linux-zen4/libxcb-1.17.0-flcve4vea2tsakty4x2qiw3nb5kby7ug (1m58s)
+[ ] 2mip7tb gflags@2.2.2 build (46s)
+[ ] 2mip7tb gflags@2.2.2 install (54s)
+[+] 2mip7tb gflags@2.2.2 /home/runner/spack/opt/spack/linux-zen4/gflags-2.2.2-2mip7tbyp7vb4t7sdc55drycirw5hklw (54s)
+[ ] qwfz262 hipcc@7.2.1 build (1m07s)
+[ ] jgaqvrr msgpack-c@3.1.1 install (1m10s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /eqkpuevfiv6toydwo6mfagxpjoppvjxl # py-distlib@0.4.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] p6dgbin superlu@5.3.0 install (1m41s)
+[ ] ut6f4un metis@5.1.0 install (1m42s)
+[ ] qwfz262 hipcc@7.2.1 install (1m46s)
+[ ] qmwtxbu z3@4.15.4 build (1m52s)
+[+] ut6f4un metis@5.1.0 /home/runner/spack/opt/spack/linux-zen4/metis-5.1.0-ut6f4unhhghu3ywss6u7ijgmarlfeevz (1m57s)
+[+] jgaqvrr msgpack-c@3.1.1 /home/runner/spack/opt/spack/linux-zen4/msgpack-c-3.1.1-jgaqvrrupzh7upwpzkv7u5vclj7fisc6 (2m09s)
+[+] p6dgbin superlu@5.3.0 /home/runner/spack/opt/spack/linux-zen4/superlu-5.3.0-p6dgbinzyyqvcw3bxtzp3kbxzonelyuk (2m18s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /6edb7lb6sii5jhfv5p5r6epm34tmdz6v # py-calver@2025.10.20 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] hqx23un py-flit-core@3.12.0 staging (0s)
+[ ] qkpvyua py-cython@3.2.4 staging (0s)
+[ ] 3nmnaym py-ply@3.11 staging (0s)
+[ ] hqx23un py-flit-core@3.12.0 install (0s)
+[ ] 3nmnaym py-ply@3.11 install (1s)
+[ ] qkpvyua py-cython@3.2.4 install (1s)
+[+] hqx23un py-flit-core@3.12.0 /home/runner/spack/opt/spack/linux-zen4/py-flit-core-3.12.0-hqx23unuzympm3lbv24f34spt3d6rkcf (10s)
+[+] 3nmnaym py-ply@3.11 /home/runner/spack/opt/spack/linux-zen4/py-ply-3.11-3nmnaym3dp2dblefhsexaxozly6uvegk (12s)
+[+] ze6hgi4 rocm-core@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocm-core-7.2.1-ze6hgi4wnynzii7xzayb2pcdfgr3teiu (3m03s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /fkj3m2g4xh5c6worxix3b5nltak2d3ym # meson@1.11.1 build_system=python_pip patches:=0f0b1bd platform=linux os=rhel9 target=zen4
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /rc6ut5csdjweppugzyomhqjsgncggp7h # libx11@1.8.13 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] smrko65 py-markupsafe@3.0.3 staging (1s)
+[ ] smrko65 py-markupsafe@3.0.3 install (1s)
+[+] smrko65 py-markupsafe@3.0.3 /home/runner/spack/opt/spack/linux-zen4/py-markupsafe-3.0.3-smrko65l3bhmps76zqataa2mvbv3zzec (2s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /yz3lb47ztzvt5fg3sug7j2jfjipuj3jj # glog@0.7.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] rc6ut5c libx11@1.8.13 staging (0s)
+[ ] ghty3zi openssh@10.3p1 staging (0s)
+[ ] yz3lb47 glog@0.7.1 staging (0s)
+[ ] fkj3m2g meson@1.11.1 staging (1s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7yio3jqo2wxkdaw2nx7aigyhj4evhbwr # py-mako@1.3.10 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] st7mf47 py-joblib@1.5.3 staging (0s)
+[ ] 6edb7lb py-calver@2025.10.20 staging (0s)
+[ ] eqkpuev py-distlib@0.4.0 staging (0s)
+[ ] 7yio3jq py-mako@1.3.10 staging (1s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /e6gr4iw42qolalyelomxdwdxurgmab5t # py-packaging@26.2 build_system=python_pip platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /aanzpmjlmkij4k7zgdt43kzsgib6yfry # py-pathspec@1.1.1 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] 6edb7lb py-calver@2025.10.20 install (3s)
+[ ] yz3lb47 glog@0.7.1 cmake (4s)
+[ ] 7yio3jq py-mako@1.3.10 install (3s)
+[ ] eqkpuev py-distlib@0.4.0 install (3s)
+[ ] ghty3zi openssh@10.3p1 autoreconf (4s)
+[ ] ghty3zi openssh@10.3p1 configure (4s)
+[ ] st7mf47 py-joblib@1.5.3 install (3s)
+[ ] rc6ut5c libx11@1.8.13 autoreconf (5s)
+[ ] rc6ut5c libx11@1.8.13 configure (5s)
+[ ] fkj3m2g meson@1.11.1 install (5s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /pjcrx3ofttbcqtvgma72qgz34detyssv # c-blosc@1.21.6+avx2~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] e6gr4iw py-packaging@26.2 staging (0s)
+[ ] e6gr4iw py-packaging@26.2 install (0s)
+[+] 7yio3jq py-mako@1.3.10 /home/runner/spack/opt/spack/linux-zen4/py-mako-1.3.10-7yio3jqo2wxkdaw2nx7aigyhj4evhbwr (17s)
+[+] 6edb7lb py-calver@2025.10.20 /home/runner/spack/opt/spack/linux-zen4/py-calver-2025.10.20-6edb7lb6sii5jhfv5p5r6epm34tmdz6v (21s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /2sxq5q7gca4zj5ld572237hr37td3qfc # py-trove-classifiers@2026.6.1.19 build_system=python_pip platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /6kdpp3tgfp4skjowcehqu3u5b3mvqkdv # py-cppheaderparser@2.7.4 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] pjcrx3o c-blosc@1.21.6 staging (0s)
+[ ] 6kdpp3t py-cppheaderparser@2.7.4 staging (0s)
+[+] e6gr4iw py-packaging@26.2 /home/runner/spack/opt/spack/linux-zen4/py-packaging-26.2-e6gr4iw42qolalyelomxdwdxurgmab5t (15s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /cspofjirdcbcgjxxkk7g5mkvtnl7pez5 # ccache@4.12.1~ipo+redis build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] cspofji ccache@4.12.1 staging (0s)
+[ ] tb5exqb go@1.26.4 install (4m55s)
+[ ] 6kdpp3t py-cppheaderparser@2.7.4 install (5s)
+[ ] pjcrx3o c-blosc@1.21.6 cmake (5s)
+[ ] cspofji ccache@4.12.1 cmake (4s)
+[ ] pjcrx3o c-blosc@1.21.6 build (5s)
+[+] 6kdpp3t py-cppheaderparser@2.7.4 /home/runner/spack/opt/spack/linux-zen4/py-cppheaderparser-2.7.4-6kdpp3tgfp4skjowcehqu3u5b3mvqkdv (6s)
+[+] eqkpuev py-distlib@0.4.0 /home/runner/spack/opt/spack/linux-zen4/py-distlib-0.4.0-eqkpuevfiv6toydwo6mfagxpjoppvjxl (36s)
+[ ] aanzpmj py-pathspec@1.1.1 staging (13s)
+[ ] aanzpmj py-pathspec@1.1.1 install (13s)
+[ ] 2sxq5q7 py-trove-classifiers@2026.6.1.19 staging (14s)
+[+] st7mf47 py-joblib@1.5.3 /home/runner/spack/opt/spack/linux-zen4/py-joblib-1.5.3-st7mf47mesffqugkflmiktj6bydsgyvo (37s)
+[ ] 2sxq5q7 py-trove-classifiers@2026.6.1.19 install (14s)
+[+] 2sxq5q7 py-trove-classifiers@2026.6.1.19 /home/runner/spack/opt/spack/linux-zen4/py-trove-classifiers-2026.6.1.19-2sxq5q7gca4zj5ld572237hr37td3qfc (15s)
+[ ] pjcrx3o c-blosc@1.21.6 install (18s)
+[+] pjcrx3o c-blosc@1.21.6 /home/runner/spack/opt/spack/linux-zen4/c-blosc-1.21.6-pjcrx3ofttbcqtvgma72qgz34detyssv (19s)
+[+] aanzpmj py-pathspec@1.1.1 /home/runner/spack/opt/spack/linux-zen4/py-pathspec-1.1.1-aanzpmjlmkij4k7zgdt43kzsgib6yfry (42s)
+[ ] cspofji ccache@4.12.1 build (1m04s)
+[ ] yz3lb47 glog@0.7.1 build (1m55s)
+[ ] rc6ut5c libx11@1.8.13 build (2m00s)
+[+] fkj3m2g meson@1.11.1 /home/runner/spack/opt/spack/linux-zen4/meson-1.11.1-fkj3m2g4xh5c6worxix3b5nltak2d3ym (2m01s)
+[ ] fbwjtoc pmix@6.1.0 install (9m46s)
+[ ] yz3lb47 glog@0.7.1 install (2m17s)
+[ ] cspofji ccache@4.12.1 install (1m59s)
+[+] yz3lb47 glog@0.7.1 /home/runner/spack/opt/spack/linux-zen4/glog-0.7.1-yz3lb47ztzvt5fg3sug7j2jfjipuj3jj (2m29s)
+[+] cspofji ccache@4.12.1 /home/runner/spack/opt/spack/linux-zen4/ccache-4.12.1-cspofjirdcbcgjxxkk7g5mkvtnl7pez5 (2m14s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /mrat5w6ap42fal67oxqvhh5tbukbf622 # rocm-cmake@7.2.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] ghty3zi openssh@10.3p1 build (3m16s)
+[+] qkpvyua py-cython@3.2.4 /home/runner/spack/opt/spack/linux-zen4/py-cython-3.2.4-qkpvyua4q2rfwxycfm2mgrjjr7vlbmvi (5m17s)
+[+] fbwjtoc pmix@6.1.0 /home/runner/spack/opt/spack/linux-zen4/pmix-6.1.0-fbwjtocut2ujuet3n6dtblvdjnuzmymd (11m03s)
+[+] pow44ly hipblas-common@7.2.1 /home/runner/spack/opt/spack/linux-zen4/hipblas-common-7.2.1-pow44lybpuuv7fsas7uod5yb2qpkbdt4 (8m03s)
+[ ] ghty3zi openssh@10.3p1 install (3m58s)
+[+] ghty3zi openssh@10.3p1 /home/runner/spack/opt/spack/linux-zen4/openssh-10.3p1-ghty3zisqe5nul3r6ban26pfwpnseucq (4m05s)
+==> Updating view at /home/runner/rocm
+[ ] rc6ut5c libx11@1.8.13 install (4m22s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /dszngsgfogxr4zbliuuwdphlnwid3lsk # git@2.53.0+man+nls+perl+subtree~tcltk build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ds5nj7ecwgiajb65eyc2l23llrqqxdcf # openmpi@4.1.6+atomics~cuda~cxx~cxx_exceptions~debug+fortran~gpfs~internal-hwloc~internal-libevent~internal-pmix~ipv6~java~lustre~memchecker~openshmem~orterunprefix~rocm+romio+rsh~static~two_level_namespace+vt+wrapper-rpath build_system=autotools fabrics:=none romio-filesystem:=none schedulers:=none platform=linux os=rhel9 target=zen4
+[ ] dszngsg git@2.53.0 staging (1s)
+[ ] ds5nj7e openmpi@4.1.6 staging (0s)
+[ ] mrat5w6 rocm-cmake@7.2.1 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /yzt7ycjjuuhelunuqpi4u33zwr5shlkk # libdrm@2.4.131~docs~strip build_system=meson buildtype=release default_library:=shared platform=linux os=rhel9 target=zen4
+[ ] yzt7ycj libdrm@2.4.131 staging (1s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /as2x25j52jpvnrvxselmg5hrr6patqp6 # py-pyyaml@6.0.3+libyaml build_system=python_pip platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /cffpdjza2yytgronmzqpbv742sp65rsb # py-msgpack@1.1.2 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] as2x25j py-pyyaml@6.0.3 staging (0s)
+[ ] cffpdjz py-msgpack@1.1.2 staging (0s)
+[ ] mrat5w6 rocm-cmake@7.2.1 cmake (8s)
+[ ] cffpdjz py-msgpack@1.1.2 install (5s)
+[ ] as2x25j py-pyyaml@6.0.3 install (5s)
+[ ] yzt7ycj libdrm@2.4.131 meson (8s)
+[ ] ds5nj7e openmpi@4.1.6 autoreconf (11s)
+[ ] ds5nj7e openmpi@4.1.6 configure (11s)
+[+] cffpdjz py-msgpack@1.1.2 /home/runner/spack/opt/spack/linux-zen4/py-msgpack-1.1.2-cffpdjza2yytgronmzqpbv742sp65rsb (10s)
+[ ] mrat5w6 rocm-cmake@7.2.1 build (16s)
+[ ] mrat5w6 rocm-cmake@7.2.1 install (16s)
+[ ] dszngsg git@2.53.0 autoreconf (20s)
+[ ] dszngsg git@2.53.0 configure (20s)
+[ ] yzt7ycj libdrm@2.4.131 build (21s)
+[ ] yzt7ycj libdrm@2.4.131 install (22s)
+[+] as2x25j py-pyyaml@6.0.3 /home/runner/spack/opt/spack/linux-zen4/py-pyyaml-6.0.3-as2x25j52jpvnrvxselmg5hrr6patqp6 (21s)
+[+] rc6ut5c libx11@1.8.13 /home/runner/spack/opt/spack/linux-zen4/libx11-1.8.13-rc6ut5csdjweppugzyomhqjsgncggp7h (5m44s)
+[+] mrat5w6 rocm-cmake@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocm-cmake-7.2.1-mrat5w6ap42fal67oxqvhh5tbukbf622 (30s)
+[+] yzt7ycj libdrm@2.4.131 /home/runner/spack/opt/spack/linux-zen4/libdrm-2.4.131-yzt7ycjjuuhelunuqpi4u33zwr5shlkk (36s)
+[ ] dszngsg git@2.53.0 build (42s)
+[ ] dszngsg git@2.53.0 install (58s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /3biiqdv7yt5hvhqxdcedxnq2orl4kq6y # rocprofiler-register@7.2.1~ipo build_system=cmake build_type=Release generator=make patches:=99764ee platform=linux os=rhel9 target=zen4
+[+] dszngsg git@2.53.0 /home/runner/spack/opt/spack/linux-zen4/git-2.53.0-dszngsgfogxr4zbliuuwdphlnwid3lsk (2m11s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /oc6p4yvjakctpmb6bwfp5bgxm2rmbpll # rocm-smi-lib@7.2.1~asan~ipo+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /euhwsqbajdcnceomckirhze2gvnqs2fr # libxext@1.3.7 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /2r3zban3abkasb72x6exb3hflf3b6zok # libxt@1.3.1 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /nmrs3ybuolln5pfxa4mrofxysnzp4dxz # libxrender@0.9.12 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] oc6p4yv rocm-smi-lib@7.2.1 staging (0s)
+[ ] nmrs3yb libxrender@0.9.12 staging (0s)
+[ ] euhwsqb libxext@1.3.7 staging (0s)
+[ ] 2r3zban libxt@1.3.1 staging (0s)
+[ ] 3biiqdv rocprofiler-register@7.2.1 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /mk42xg7zxsrxyyfks6nknzjc2visstxy # py-setuptools-scm@9.2.2+toml build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] oc6p4yv rocm-smi-lib@7.2.1 cmake (2s)
+[ ] mk42xg7 py-setuptools-scm@9.2.2 staging (0s)
+[ ] 3biiqdv rocprofiler-register@7.2.1 cmake (2s)
+[ ] mk42xg7 py-setuptools-scm@9.2.2 install (2s)
+[ ] nmrs3yb libxrender@0.9.12 autoreconf (3s)
+[ ] nmrs3yb libxrender@0.9.12 configure (3s)
+[ ] oc6p4yv rocm-smi-lib@7.2.1 build (9s)
+[ ] euhwsqb libxext@1.3.7 autoreconf (10s)
+[ ] euhwsqb libxext@1.3.7 configure (10s)
+[ ] 2r3zban libxt@1.3.1 autoreconf (11s)
+[ ] 2r3zban libxt@1.3.1 configure (11s)
+[ ] oc6p4yv rocm-smi-lib@7.2.1 install (20s)
+[ ] 2r3zban libxt@1.3.1 build (35s)
+[+] mk42xg7 py-setuptools-scm@9.2.2 /home/runner/spack/opt/spack/linux-zen4/py-setuptools-scm-9.2.2-mk42xg7zxsrxyyfks6nknzjc2visstxy (37s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /6kf253tztfexmeqv3bd6q5vunn3s3hrv # py-pluggy@1.6.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] 6kf253t py-pluggy@1.6.0 staging (0s)
+[ ] 6kf253t py-pluggy@1.6.0 install (0s)
+[ ] euhwsqb libxext@1.3.7 build (43s)
+[ ] euhwsqb libxext@1.3.7 install (45s)
+[+] euhwsqb libxext@1.3.7 /home/runner/spack/opt/spack/linux-zen4/libxext-1.3.7-euhwsqbajdcnceomckirhze2gvnqs2fr (48s)
+[ ] 3biiqdv rocprofiler-register@7.2.1 build (48s)
+[ ] 2r3zban libxt@1.3.1 install (48s)
+[ ] qmwtxbu z3@4.15.4 install (13m15s)
+[+] 6kf253t py-pluggy@1.6.0 /home/runner/spack/opt/spack/linux-zen4/py-pluggy-1.6.0-6kf253tztfexmeqv3bd6q5vunn3s3hrv (14s)
+[ ] 3biiqdv rocprofiler-register@7.2.1 install (1m05s)
+[+] 2r3zban libxt@1.3.1 /home/runner/spack/opt/spack/linux-zen4/libxt-1.3.1-2r3zban3abkasb72x6exb3hflf3b6zok (1m10s)
+[ ] nmrs3yb libxrender@0.9.12 build (1m27s)
+[ ] nmrs3yb libxrender@0.9.12 install (1m27s)
+[+] nmrs3yb libxrender@0.9.12 /home/runner/spack/opt/spack/linux-zen4/libxrender-0.9.12-nmrs3ybuolln5pfxa4mrofxysnzp4dxz (1m28s)
+[+] qmwtxbu z3@4.15.4 /home/runner/spack/opt/spack/linux-zen4/z3-4.15.4-qmwtxbupcusnbcgld34xu3ml53atkp3h (14m41s)
+==> Updating view at /home/runner/rocm
+[+] oc6p4yv rocm-smi-lib@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocm-smi-lib-7.2.1-oc6p4yvjakctpmb6bwfp5bgxm2rmbpll (2m34s)
+[+] 3biiqdv rocprofiler-register@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocprofiler-register-7.2.1-3biiqdv7yt5hvhqxdcedxnq2orl4kq6y (3m17s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /jc7l7aafdnwkzx7twt7s4mhvwmq5eeoc # py-hatchling@1.29.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+[+] tb5exqb go@1.26.4 /home/runner/spack/opt/spack/linux-zen4/go-1.26.4-tb5exqbmxsqfg7ohtuhyrxhxi6bzqsiq (16m14s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /djewfm4ywnkvsuid6am37vuilui6dwts # gh@2.93.0 build_system=go platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ccnufntvc5pnrgsblhzfo3galypqx3xc # libxrandr@1.5.5 build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] djewfm4 gh@2.93.0 staging (0s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /35wmkr2db7vwgvd2qw2bwlwyna5d7xv2 # llvm-amdgpu@7.2.1~ipo+link_llvm_dylib~llvm_dylib+rocm-device-libs build_system=cmake build_type=Release generator=ninja patches:=74471ee platform=linux os=rhel9 target=zen4
+[ ] ccnufnt libxrandr@1.5.5 staging (0s)
+[ ] 35wmkr2 llvm-amdgpu@7.2.1 staging (0s)
+[ ] jc7l7aa py-hatchling@1.29.0 staging (0s)
+[ ] jc7l7aa py-hatchling@1.29.0 install (2s)
+[ ] ccnufnt libxrandr@1.5.5 autoreconf (2s)
+[ ] ccnufnt libxrandr@1.5.5 configure (2s)
+[ ] djewfm4 gh@2.93.0 build (4s)
+[+] jc7l7aa py-hatchling@1.29.0 /home/runner/spack/opt/spack/linux-zen4/py-hatchling-1.29.0-jc7l7aafdnwkzx7twt7s4mhvwmq5eeoc (3s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /3r7yvg6oewq4xugmdsl6gsok62d5xba6 # py-hatch-vcs@0.5.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] 3r7yvg6 py-hatch-vcs@0.5.0 staging (0s)
+[ ] 3r7yvg6 py-hatch-vcs@0.5.0 install (0s)
+[ ] ccnufnt libxrandr@1.5.5 build (10s)
+[ ] ccnufnt libxrandr@1.5.5 install (11s)
+[+] ccnufnt libxrandr@1.5.5 /home/runner/spack/opt/spack/linux-zen4/libxrandr-1.5.5-ccnufntvc5pnrgsblhzfo3galypqx3xc (15s)
+[+] 3r7yvg6 py-hatch-vcs@0.5.0 /home/runner/spack/opt/spack/linux-zen4/py-hatch-vcs-0.5.0-3r7yvg6oewq4xugmdsl6gsok62d5xba6 (12s)
+[ ] ds5nj7e openmpi@4.1.6 build (7m05s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /yit7momseiwbl7qxalq4z73cqr3gyqux # xrandr@1.5.3 build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /xrlyqnxwtl5ksedf2gker2pe4amqm7u5 # py-filelock@3.29.1 build_system=python_pip platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /qjdbigtpfq6zummnqjervekdrw3wncdo # py-platformdirs@4.10.0~wheel build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] yit7mom xrandr@1.5.3 staging (0s)
+[ ] yit7mom xrandr@1.5.3 autoreconf (0s)
+[ ] yit7mom xrandr@1.5.3 configure (0s)
+[ ] qjdbigt py-platformdirs@4.10.0 staging (0s)
+[ ] xrlyqnx py-filelock@3.29.1 staging (0s)
+[ ] qjdbigt py-platformdirs@4.10.0 install (0s)
+[+] qjdbigt py-platformdirs@4.10.0 /home/runner/spack/opt/spack/linux-zen4/py-platformdirs-4.10.0-qjdbigtpfq6zummnqjervekdrw3wncdo (8s)
+[ ] yit7mom xrandr@1.5.3 build (9s)
+[ ] yit7mom xrandr@1.5.3 install (10s)
+[ ] xrlyqnx py-filelock@3.29.1 install (10s)
+[+] yit7mom xrandr@1.5.3 /home/runner/spack/opt/spack/linux-zen4/xrandr-1.5.3-yit7momseiwbl7qxalq4z73cqr3gyqux (10s)
+[+] xrlyqnx py-filelock@3.29.1 /home/runner/spack/opt/spack/linux-zen4/py-filelock-3.29.1-xrlyqnxwtl5ksedf2gker2pe4amqm7u5 (28s)
+[ ] djewfm4 gh@2.93.0 install (1m48s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /4npwj26pt3tu6wcmxkcvjaurgm3uzady # py-python-discovery@1.4.0 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] 4npwj26 py-python-discovery@1.4.0 staging (9s)
+[ ] 4npwj26 py-python-discovery@1.4.0 install (10s)
+[+] 4npwj26 py-python-discovery@1.4.0 /home/runner/spack/opt/spack/linux-zen4/py-python-discovery-1.4.0-4npwj26pt3tu6wcmxkcvjaurgm3uzady (11s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /jwrf6vhncitxfpmhx5w6jqry77yziome # py-virtualenv@21.4.1 build_system=python_pip platform=linux os=rhel9 target=zen4
+[ ] jwrf6vh py-virtualenv@21.4.1 staging (0s)
+[ ] jwrf6vh py-virtualenv@21.4.1 install (1s)
+[+] jwrf6vh py-virtualenv@21.4.1 /home/runner/spack/opt/spack/linux-zen4/py-virtualenv-21.4.1-jwrf6vhncitxfpmhx5w6jqry77yziome (13s)
+[ ] 35wmkr2 llvm-amdgpu@7.2.1 cmake (3m13s)
+[+] djewfm4 gh@2.93.0 /home/runner/spack/opt/spack/linux-zen4/gh-2.93.0-djewfm4ywnkvsuid6am37vuilui6dwts (4m29s)
+==> Updating view at /home/runner/rocm
+[ ] ds5nj7e openmpi@4.1.6 install (12m48s)
+[ ] 35wmkr2 llvm-amdgpu@7.2.1 build (6m52s)
+[+] qwfz262 hipcc@7.2.1 /home/runner/spack/opt/spack/linux-zen4/hipcc-7.2.1-qwfz262lneuyw7bqv5pakqvigeria5h5 (23m39s)
+==> Updating view at /home/runner/rocm
+[+] ds5nj7e openmpi@4.1.6 /home/runner/spack/opt/spack/linux-zen4/openmpi-4.1.6-ds5nj7ecwgiajb65eyc2l23llrqqxdcf (18m05s)
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /gcmvg365chk6gf3myluvi6kg4ymw5tjj # hdf5@1.14.6~cxx~fortran+hl~ipo~java~map+mpi+shared~subfiling~szip~threadsafe+tools api=default build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /4jddkhvkvwtmprsud5ng73juqkysifom # parallel-netcdf@1.14.1~burstbuffer+cxx~examples+fortran+pic+shared build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ukd36e4ljl3rgfk3754amfkdsytzozpc # parmetis@4.0.3~gdb~int64~ipo+shared build_system=cmake build_type=Release generator=make patches:=4f89253,50ed208,704b84f platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /la2cx4y6yceffzrwkipctetlhppo3m47 # valgrind@3.27.1+boost+mpi+only64bit~ubsan build_system=autotools libs:=shared,static platform=linux os=rhel9 target=zen4
+[ ] gcmvg36 hdf5@1.14.6 staging (0s)
+[ ] 4jddkhv parallel-netcdf@1.14.1 staging (0s)
+[ ] ukd36e4 parmetis@4.0.3 staging (1s)
+[ ] la2cx4y valgrind@3.27.1 staging (1s)
+[ ] 4jddkhv parallel-netcdf@1.14.1 autoreconf (1s)
+[ ] 4jddkhv parallel-netcdf@1.14.1 configure (1s)
+[ ] ukd36e4 parmetis@4.0.3 cmake (1s)
+[ ] ukd36e4 parmetis@4.0.3 build (3s)
+[ ] gcmvg36 hdf5@1.14.6 cmake (3s)
+[ ] ukd36e4 parmetis@4.0.3 install (6s)
+[ ] la2cx4y valgrind@3.27.1 autoreconf (9s)
+[ ] la2cx4y valgrind@3.27.1 configure (9s)
+[+] ukd36e4 parmetis@4.0.3 /home/runner/spack/opt/spack/linux-zen4/parmetis-4.0.3-ukd36e4ljl3rgfk3754amfkdsytzozpc (21s)
+[ ] 4jddkhv parallel-netcdf@1.14.1 build (3m08s)
+[ ] la2cx4y valgrind@3.27.1 build (3m31s)
+[ ] 4jddkhv parallel-netcdf@1.14.1 install (4m10s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /hhlz6jdn6rhrihcn7ww3jo4luevxjgfn # superlu-dist@5.4.0~cuda~int64~ipo~openmp+parmetis~rocm+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] hhlz6jd superlu-dist@5.4.0 staging (0s)
+[ ] hhlz6jd superlu-dist@5.4.0 cmake (1s)
+[+] 4jddkhv parallel-netcdf@1.14.1 /home/runner/spack/opt/spack/linux-zen4/parallel-netcdf-1.14.1-4jddkhvkvwtmprsud5ng73juqkysifom (4m51s)
+[ ] la2cx4y valgrind@3.27.1 install (5m05s)
+[ ] hhlz6jd superlu-dist@5.4.0 build (1m26s)
+[ ] hhlz6jd superlu-dist@5.4.0 install (1m31s)
+[ ] gcmvg36 hdf5@1.14.6 build (6m23s)
+[+] hhlz6jd superlu-dist@5.4.0 /home/runner/spack/opt/spack/linux-zen4/superlu-dist-5.4.0-hhlz6jdn6rhrihcn7ww3jo4luevxjgfn (2m13s)
+[ ] gcmvg36 hdf5@1.14.6 install (6m58s)
+==> Updating view at /home/runner/rocm
+[+] la2cx4y valgrind@3.27.1 /home/runner/spack/opt/spack/linux-zen4/valgrind-3.27.1-la2cx4y6yceffzrwkipctetlhppo3m47 (7m46s)
+[+] gcmvg36 hdf5@1.14.6 /home/runner/spack/opt/spack/linux-zen4/hdf5-1.14.6-gcmvg365chk6gf3myluvi6kg4ymw5tjj (7m52s)
+==> Updating view at /home/runner/rocm
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /cmtpmm5vcohs4nyve6piwytnvrfhxxvp # netcdf-c@4.10.0+blosc~byterange~dap~fsync~hdf4~jna~logging+mpi~nczarr_zip+optimize+parallel-netcdf+pic+shared+szip+zstd build_system=autotools platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /ctuhznftxbikuk43ghgzfjk5o3i4pczk # matio@1.5.26+hdf5+shared+zlib build_system=autotools platform=linux os=rhel9 target=zen4
+[ ] ctuhznf matio@1.5.26 staging (0s)
+[ ] cmtpmm5 netcdf-c@4.10.0 staging (0s)
+[ ] ctuhznf matio@1.5.26 autoreconf (2s)
+[ ] ctuhznf matio@1.5.26 configure (2s)
+[ ] cmtpmm5 netcdf-c@4.10.0 autoreconf (3s)
+[ ] cmtpmm5 netcdf-c@4.10.0 configure (3s)
+[ ] ctuhznf matio@1.5.26 build (8s)
+[ ] cmtpmm5 netcdf-c@4.10.0 build (20s)
+[ ] ctuhznf matio@1.5.26 install (22s)
+[+] ctuhznf matio@1.5.26 /home/runner/spack/opt/spack/linux-zen4/matio-1.5.26-ctuhznftxbikuk43ghgzfjk5o3i4pczk (23s)
+[ ] cmtpmm5 netcdf-c@4.10.0 install (39s)
+==> Updating view at /home/runner/rocm
+[+] cmtpmm5 netcdf-c@4.10.0 /home/runner/spack/opt/spack/linux-zen4/netcdf-c-4.10.0-cmtpmm5vcohs4nyve6piwytnvrfhxxvp (55s)
+==> Updating view at /home/runner/rocm
+[ ] 35wmkr2 llvm-amdgpu@7.2.1 install (23m20s)
+[+] 35wmkr2 llvm-amdgpu@7.2.1 /home/runner/spack/opt/spack/linux-zen4/llvm-amdgpu-7.2.1-35wmkr2db7vwgvd2qw2bwlwyna5d7xv2 (31m14s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /gizjrv2npgtqyorg37hi35ukdok6y44t # comgr@7.2.1~asan~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /b2erqavo6wd3cgxnct2muphmheknfsqb # mesa@25.0.5~egl+glx+llvm+opengl~opengles+osmesa~strip build_system=meson buildtype=release default_library:=shared platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /tgivrxi3bnrci4upano5yh7yro3kso6v # hipify-clang@7.2.1~asan~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /dkctoqhuhjkwno3euuvqwha5pqhevl3p # hsa-rocr-dev@7.2.1~asan+image~ipo+shared build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] tgivrxi hipify-clang@7.2.1 staging (0s)
+[ ] dkctoqh hsa-rocr-dev@7.2.1 staging (0s)
+[ ] b2erqav mesa@25.0.5 staging (0s)
+[ ] gizjrv2 comgr@7.2.1 staging (0s)
+[ ] dkctoqh hsa-rocr-dev@7.2.1 cmake (1s)
+[ ] tgivrxi hipify-clang@7.2.1 cmake (2s)
+[ ] dkctoqh hsa-rocr-dev@7.2.1 build (4s)
+[ ] tgivrxi hipify-clang@7.2.1 build (10s)
+[ ] b2erqav mesa@25.0.5 meson (11s)
+[ ] dkctoqh hsa-rocr-dev@7.2.1 install (17s)
+[ ] gizjrv2 comgr@7.2.1 cmake (18s)
+[ ] gizjrv2 comgr@7.2.1 build (21s)
+[ ] b2erqav mesa@25.0.5 build (29s)
+[ ] tgivrxi hipify-clang@7.2.1 install (32s)
+[ ] gizjrv2 comgr@7.2.1 install (38s)
+[+] tgivrxi hipify-clang@7.2.1 /home/runner/spack/opt/spack/linux-zen4/hipify-clang-7.2.1-tgivrxi3bnrci4upano5yh7yro3kso6v (1m04s)
+[+] dkctoqh hsa-rocr-dev@7.2.1 /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p (1m31s)
+[ ] b2erqav mesa@25.0.5 install (1m37s)
+==> Updating view at /home/runner/rocm
+[+] b2erqav mesa@25.0.5 /home/runner/spack/opt/spack/linux-zen4/mesa-25.0.5-b2erqavo6wd3cgxnct2muphmheknfsqb (2m43s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /7vodwkdrjtefztdnyst37y5cyo7o47ii # rocminfo@7.2.1~ipo build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /fupoz4ll33pevlsd6pefnty3yxuz7pt3 # glx@1.4 build_system=bundle platform=linux os=rhel9 target=zen4
+[ ] 7vodwkd rocminfo@7.2.1 staging (0s)
+[ ] fupoz4l glx@1.4 staging (0s)
+[ ] fupoz4l glx@1.4 install (0s)
+[+] fupoz4l glx@1.4 /home/runner/spack/opt/spack/linux-zen4/glx-1.4-fupoz4ll33pevlsd6pefnty3yxuz7pt3 (0s)
+[ ] 7vodwkd rocminfo@7.2.1 cmake (2s)
+[ ] 7vodwkd rocminfo@7.2.1 build (2s)
+[ ] 7vodwkd rocminfo@7.2.1 install (3s)
+==> Updating view at /home/runner/rocm
+[+] 7vodwkd rocminfo@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocminfo-7.2.1-7vodwkdrjtefztdnyst37y5cyo7o47ii (1m04s)
+==> Updating view at /home/runner/rocm
+[+] gizjrv2 comgr@7.2.1 /home/runner/spack/opt/spack/linux-zen4/comgr-7.2.1-gizjrv2npgtqyorg37hi35ukdok6y44t (8m35s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /5nlktp2ytayqamvdnm7nn6sksgkpaphe # hip@7.2.1~asan~cuda~ipo+rocm build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] 5nlktp2 hip@7.2.1 staging (1s)
+[ ] 5nlktp2 hip@7.2.1 cmake (47s)
+[ ] 5nlktp2 hip@7.2.1 build (51s)
+[ ] 5nlktp2 hip@7.2.1 install (1m25s)
+[+] 5nlktp2 hip@7.2.1 /home/runner/spack/opt/spack/linux-zen4/hip-7.2.1-5nlktp2ytayqamvdnm7nn6sksgkpaphe (2m16s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /kisd4ojn67fuhutw5hpxqt4h4jwblrqr # roctracer-dev@7.2.1~asan~ipo~rocm build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /p35oiqqtpxcbfjzm6mukabwcske7zlnh # rocprim@7.2.1~asan~ipo amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /uhawyheeodfgcbtt5ud636rbfgfasaqq # rocrand@7.2.1~asan~ipo amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] uhawyhe rocrand@7.2.1 staging (0s)
+[ ] kisd4oj roctracer-dev@7.2.1 staging (1s)
+[ ] p35oiqq rocprim@7.2.1 staging (1s)
+[ ] kisd4oj roctracer-dev@7.2.1 cmake (2s)
+[ ] kisd4oj roctracer-dev@7.2.1 build (3s)
+[x] kisd4oj roctracer-dev@7.2.1 failed: /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr-51mksa_z.log (14s)
+-- lines 34 to 46 --
+  Using CPACK_RPM_PACKAGE_RELEASE local
+  RESULT_VARIABLE 0 OUTPUT_VARIABLE: .el9
+  CPACK_RPM_PACKAGE_RELEASE: local%{?dist}
+  -- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE)
+  -- Configuring done (1.3s)
+  -- Generating done (0.1s)
+> CMake Warning:
+    Manually-specified variables were not used by the project:
+  
+      CMAKE_POLICY_DEFAULT_CMP0090
+      HIP_VDI
+      HSA_RUNTIME_HSA_INC_PATH
+      PYTHON_EXECUTABLE
+-- lines 163 to 192 --
+  [ 32%] Generating hsa_ostream_ops.h...
+  [ 32%] Generating hip_ostream_ops.h...
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/gcc -E /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/include/hsa/hsa.h -o hsa.h.i
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/gcc -I/home/runner/spack/opt/spack/linux-zen4/hip-7.2.1-5nlktp2ytayqamvdnm7nn6sksgkpaphe/include -E /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/src/roctracer/hip_full_api.h -D__HIP_PLATFORM_AMD__=1 -D__HIP_ROCclr__=1 -o hip_runtime_api.h.i
+  -- Copy if different /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.tmp to /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend
+  /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E copy_if_different /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.tmp /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:109: SyntaxWarning: invalid escape sequence '\s'
+    self.beg_pattern = re.compile('^\s*struct\s+' + name + 'Table\s*{\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:109: SyntaxWarning: invalid escape sequence '\s'
+    self.beg_pattern = re.compile('^\s*struct\s+' + name + 'Table\s*{\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:110: SyntaxWarning: invalid escape sequence '\s'
+    self.end_pattern = re.compile('^\s*};\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:154: SyntaxWarning: invalid escape sequence '\)'
+    self.end_pattern = re.compile('\);\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:169: SyntaxWarning: invalid escape sequence '\s'
+    return re.search('\s' + call + '\s*\(', record)
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:169: SyntaxWarning: invalid escape sequence '\s'
+    return re.search('\s' + call + '\s*\(', record)
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:174: SyntaxWarning: invalid escape sequence '\s'
+    return re.match('\s+\S+\s+' + call + '\s*\(', record)
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:174: SyntaxWarning: invalid escape sequence '\s'
+    return re.match('\s+\S+\s+' + call + '\s*\(', record)
+  -- Removing /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.tmp and /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.pre
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:530: SyntaxWarning: invalid escape sequence '\('
+    if re.search(r'\(\* ', arg_item): arg_pref = ''
+  /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E remove /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.tmp /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.pre
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/gcc -E /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/include/hsa/hsa_ext_amd.h -o hsa_ext_amd.h.i
+  -- Generating /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/./roctx_test_generated_roctx_test.cpp.o
+  /home/runner/spack/opt/spack/linux-zen4/hip-7.2.1-5nlktp2ytayqamvdnm7nn6sksgkpaphe/bin/hipcc -c /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/test/app/roctx_test.cpp -o /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/./roctx_test_generated_roctx_test.cpp.o -DAMD_INTERNAL_BUILD -DHIP_TEST=0 -D__HIP_PLATFORM_AMD__ -DAMD_INTERNAL_BUILD -I/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/inc
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/python-3.12.13-ufopikconqvh2aamaznbm424x5qvx63l/bin/python3.12 /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/gen_ostream_ops.py -in hip_runtime_api.h.i -out hip_ostream_ops.h > /dev/null
+-- lines 194 to 221 --
+  [ 34%] Linking CXX executable copy
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/copy.dir/link.txt --verbose=1
+  [ 36%] Linking CXX executable memory_pool
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/memory_pool.dir/link.txt --verbose=1
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -O3 -DNDEBUG CMakeFiles/copy.dir/hsa/copy.cpp.o -o copy  -Wl,-rpath,/home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib/libhsa-runtime64.so.1.18.0 -ldl
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+> /usr/bin/ld: cannot find /usr/lib64/libatomic.so.1.2.0
+  [ 36%] Built target copy
+> collect2: error: ld returned 1 exit status
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -O3 -DNDEBUG CMakeFiles/memory_pool.dir/directed/memory_pool.cpp.o -o memory_pool  -Wl,-rpath,::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: -latomic
+> make[3]: *** [test/CMakeFiles/memory_pool.dir/build.make:103: test/memory_pool] Error 1
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+> make[2]: *** [CMakeFiles/Makefile2:1075: test/CMakeFiles/memory_pool.dir/all] Error 2
+  make[2]: *** Waiting for unfinished jobs....
+  [ 38%] Linking CXX executable trace_buffer
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/trace_buffer.dir/link.txt --verbose=1
+> /usr/bin/ld: cannot find /usr/lib64/libatomic.so.1.2.0
+> collect2: error: ld returned 1 exit status
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -O3 -DNDEBUG CMakeFiles/trace_buffer.dir/directed/trace_buffer.cpp.o -o trace_buffer  -Wl,-rpath,::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: -latomic
+> make[3]: *** [test/CMakeFiles/trace_buffer.dir/build.make:103: test/trace_buffer] Error 1
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+> make[2]: *** [CMakeFiles/Makefile2:1043: test/CMakeFiles/trace_buffer.dir/all] Error 2
+  Generated /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/./roctx_test_generated_roctx_test.cpp.o successfully.
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_depends "Unix Makefiles" /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/test /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/DependInfo.cmake "--color="
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  /home/runner/spack/opt/spack/linux-zen4/gmake-4.4.1-rekpwfe5qjqbqluizo7xc3eo2y6ttzj5/bin/make  -f test/CMakeFiles/roctx_test.dir/build.make test/CMakeFiles/roctx_test.dir/build
+  make[3]: Entering directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  [ 40%] Linking HIP executable roctx_test
+-- lines 239 to 248 --
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/roctracer.dir/link.txt --verbose=1
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -fPIC -O3 -DNDEBUG -Wl,--version-script=/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/src/roctracer/exportmap -Wl,--no-undefined -shared -Wl,-soname,libroctracer64.so.4 -o ../libroctracer64.so.4.1.0 CMakeFiles/roctracer.dir/roctracer/backward_compat.cpp.o CMakeFiles/roctracer.dir/roctracer/correlation_id.cpp.o CMakeFiles/roctracer.dir/roctracer/hsa_support.cpp.o CMakeFiles/roctracer.dir/roctracer/roctracer.cpp.o  -Wl,-rpath,/home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: libutil.a /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib/libhsa-runtime64.so.1.18.0 -lstdc++fs -ldl
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_symlink_library ../libroctracer64.so.4.1.0 ../libroctracer64.so.4 ../libroctracer64.so
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  [ 50%] Built target roctracer
+  make[2]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+> make[1]: *** [Makefile:159: all] Error 2
+  make[1]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  Command exited with status 2:
+      /home/runner/spack/opt/spack/linux-zen4/gmake-4.4.1-rekpwfe5qjqbqluizo7xc3eo2y6ttzj5/bin/make
+==> Error: The following packages failed to install:
+roctracer-dev@7.2.1/kisd4ojn67fuhutw5hpxqt4h4jwblrqr: /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr-51mksa_z.log
+make: *** [Makefile:24: /home/runner/environment/.spack-env/makedeps/install/roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr] Error 1
+make: *** Waiting for unfinished jobs....
+[ ] p35oiqq rocprim@7.2.1 cmake (20s)
+[ ] uhawyhe rocrand@7.2.1 cmake (20s)
+[ ] uhawyhe rocrand@7.2.1 build (28s)
+[ ] p35oiqq rocprim@7.2.1 build (28s)
+[ ] p35oiqq rocprim@7.2.1 install (28s)
+[+] p35oiqq rocprim@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocprim-7.2.1-p35oiqqtpxcbfjzm6mukabwcske7zlnh (1m40s)
+==> Updating view at /home/runner/rocm
+[ ] uhawyhe rocrand@7.2.1 install (3m21s)
+[+] uhawyhe rocrand@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocrand-7.2.1-uhawyheeodfgcbtt5ud636rbfgfasaqq (4m24s)
+==> Updating view at /home/runner/rocm
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /kisd4ojn67fuhutw5hpxqt4h4jwblrqr # roctracer-dev@7.2.1~asan~ipo~rocm build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+/home/runner/spack/bin/spack -c config:install_status:false -e '/home/runner/environment' install   --only-concrete --only=package /n424tcrq3mvz7hido6ldpsu3ntu2h2uo # rocthrust@7.2.1~ipo amdgpu_target:=gfx942 build_system=cmake build_type=Release generator=make platform=linux os=rhel9 target=zen4
+[ ] n424tcr rocthrust@7.2.1 staging (0s)
+[ ] n424tcr rocthrust@7.2.1 cmake (22s)
+[ ] kisd4oj roctracer-dev@7.2.1 staging (24s)
+[ ] kisd4oj roctracer-dev@7.2.1 cmake (25s)
+[ ] kisd4oj roctracer-dev@7.2.1 build (31s)
+[ ] n424tcr rocthrust@7.2.1 build (32s)
+[ ] n424tcr rocthrust@7.2.1 install (32s)
+[x] kisd4oj roctracer-dev@7.2.1 failed: /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr-6k5q13pz.log (43s)
+-- lines 34 to 46 --
+  Using CPACK_RPM_PACKAGE_RELEASE local
+  RESULT_VARIABLE 0 OUTPUT_VARIABLE: .el9
+  CPACK_RPM_PACKAGE_RELEASE: local%{?dist}
+  -- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE)
+  -- Configuring done (5.3s)
+  -- Generating done (0.2s)
+> CMake Warning:
+    Manually-specified variables were not used by the project:
+  
+      CMAKE_POLICY_DEFAULT_CMP0090
+      HIP_VDI
+      HSA_RUNTIME_HSA_INC_PATH
+      PYTHON_EXECUTABLE
+-- lines 164 to 193 --
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/python-3.12.13-ufopikconqvh2aamaznbm424x5qvx63l/bin/python3.12 /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/include/hsa > /dev/null
+  [ 32%] Generating hsa_ostream_ops.h...
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/gcc -I/home/runner/spack/opt/spack/linux-zen4/hip-7.2.1-5nlktp2ytayqamvdnm7nn6sksgkpaphe/include -E /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/src/roctracer/hip_full_api.h -D__HIP_PLATFORM_AMD__=1 -D__HIP_ROCclr__=1 -o hip_runtime_api.h.i
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/gcc -E /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/include/hsa/hsa.h -o hsa.h.i
+  /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E copy_if_different /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.tmp /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend
+  -- Removing /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.tmp and /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.pre
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:109: SyntaxWarning: invalid escape sequence '\s'
+    self.beg_pattern = re.compile('^\s*struct\s+' + name + 'Table\s*{\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:109: SyntaxWarning: invalid escape sequence '\s'
+    self.beg_pattern = re.compile('^\s*struct\s+' + name + 'Table\s*{\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:110: SyntaxWarning: invalid escape sequence '\s'
+    self.end_pattern = re.compile('^\s*};\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:154: SyntaxWarning: invalid escape sequence '\)'
+  /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E remove /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.tmp /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/roctx_test_generated_roctx_test.cpp.o.depend.pre
+    self.end_pattern = re.compile('\);\s*$')
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:169: SyntaxWarning: invalid escape sequence '\s'
+    return re.search('\s' + call + '\s*\(', record)
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:169: SyntaxWarning: invalid escape sequence '\s'
+    return re.search('\s' + call + '\s*\(', record)
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:174: SyntaxWarning: invalid escape sequence '\s'
+    return re.match('\s+\S+\s+' + call + '\s*\(', record)
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:174: SyntaxWarning: invalid escape sequence '\s'
+    return re.match('\s+\S+\s+' + call + '\s*\(', record)
+> /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/hsaap.py:530: SyntaxWarning: invalid escape sequence '\('
+    if re.search(r'\(\* ', arg_item): arg_pref = ''
+  -- Generating /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/./roctx_test_generated_roctx_test.cpp.o
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/gcc -E /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/include/hsa/hsa_ext_amd.h -o hsa_ext_amd.h.i
+  /home/runner/spack/opt/spack/linux-zen4/hip-7.2.1-5nlktp2ytayqamvdnm7nn6sksgkpaphe/bin/hipcc -c /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/test/app/roctx_test.cpp -o /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/./roctx_test_generated_roctx_test.cpp.o -DAMD_INTERNAL_BUILD -DHIP_TEST=0 -D__HIP_PLATFORM_AMD__ -DAMD_INTERNAL_BUILD -I/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/inc
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/python-3.12.13-ufopikconqvh2aamaznbm424x5qvx63l/bin/python3.12 /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/gen_ostream_ops.py -in hip_runtime_api.h.i -out hip_ostream_ops.h > /dev/null
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/python-3.12.13-ufopikconqvh2aamaznbm424x5qvx63l/bin/python3.12 /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/script/gen_ostream_ops.py -in hsa.h.i,hsa_ext_amd.h.i -out hsa_ostream_ops.h > /dev/null
+-- lines 195 to 221 --
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/copy.dir/link.txt --verbose=1
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -O3 -DNDEBUG CMakeFiles/copy.dir/hsa/copy.cpp.o -o copy  -Wl,-rpath,/home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib/libhsa-runtime64.so.1.18.0 -ldl
+  [ 36%] Linking CXX executable memory_pool
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/memory_pool.dir/link.txt --verbose=1
+  [ 36%] Built target copy
+> /usr/bin/ld: cannot find /usr/lib64/libatomic.so.1.2.0
+> collect2: error: ld returned 1 exit status
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -O3 -DNDEBUG CMakeFiles/memory_pool.dir/directed/memory_pool.cpp.o -o memory_pool  -Wl,-rpath,::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: -latomic
+> make[3]: *** [test/CMakeFiles/memory_pool.dir/build.make:103: test/memory_pool] Error 1
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  [ 38%] Linking CXX executable trace_buffer
+> make[2]: *** [CMakeFiles/Makefile2:1075: test/CMakeFiles/memory_pool.dir/all] Error 2
+  make[2]: *** Waiting for unfinished jobs....
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/trace_buffer.dir/link.txt --verbose=1
+> /usr/bin/ld: cannot find /usr/lib64/libatomic.so.1.2.0
+> collect2: error: ld returned 1 exit status
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -O3 -DNDEBUG CMakeFiles/trace_buffer.dir/directed/trace_buffer.cpp.o -o trace_buffer  -Wl,-rpath,::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: -latomic
+> make[3]: *** [test/CMakeFiles/trace_buffer.dir/build.make:103: test/trace_buffer] Error 1
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+> make[2]: *** [CMakeFiles/Makefile2:1043: test/CMakeFiles/trace_buffer.dir/all] Error 2
+  Generated /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/app/./roctx_test_generated_roctx_test.cpp.o successfully.
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_depends "Unix Makefiles" /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/test /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/test/CMakeFiles/roctx_test.dir/DependInfo.cmake "--color="
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  /home/runner/spack/opt/spack/linux-zen4/gmake-4.4.1-rekpwfe5qjqbqluizo7xc3eo2y6ttzj5/bin/make  -f test/CMakeFiles/roctx_test.dir/build.make test/CMakeFiles/roctx_test.dir/build
+  make[3]: Entering directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  [ 40%] Linking HIP executable roctx_test
+-- lines 239 to 248 --
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_link_script CMakeFiles/roctracer.dir/link.txt --verbose=1
+  /home/runner/spack/opt/spack/linux-zen4/compiler-wrapper-1.1.0-ajhkyz7ggj3dm7jjrt24hcca2qmx3aqh/libexec/spack/gcc/g++ -fPIC -O3 -DNDEBUG -Wl,--version-script=/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-src/projects/roctracer/src/roctracer/exportmap -Wl,--no-undefined -shared -Wl,-soname,libroctracer64.so.4 -o ../libroctracer64.so.4.1.0 CMakeFiles/roctracer.dir/roctracer/backward_compat.cpp.o CMakeFiles/roctracer.dir/roctracer/correlation_id.cpp.o CMakeFiles/roctracer.dir/roctracer/hsa_support.cpp.o CMakeFiles/roctracer.dir/roctracer/roctracer.cpp.o  -Wl,-rpath,/home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::: libutil.a /home/runner/spack/opt/spack/linux-zen4/hsa-rocr-dev-7.2.1-dkctoqhuhjkwno3euuvqwha5pqhevl3p/lib/libhsa-runtime64.so.1.18.0 -lstdc++fs -ldl
+  cd /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj/src && /home/runner/spack/opt/spack/linux-zen4/cmake-3.31.11-aecrwmzb5yzbqnie4wz3jcyabfe6lqmj/bin/cmake -E cmake_symlink_library ../libroctracer64.so.4.1.0 ../libroctracer64.so.4 ../libroctracer64.so
+  make[3]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  [ 50%] Built target roctracer
+  make[2]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+> make[1]: *** [Makefile:159: all] Error 2
+  make[1]: Leaving directory '/tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr/spack-build-kisd4oj'
+  Command exited with status 2:
+      /home/runner/spack/opt/spack/linux-zen4/gmake-4.4.1-rekpwfe5qjqbqluizo7xc3eo2y6ttzj5/bin/make
+==> Error: The following packages failed to install:
+roctracer-dev@7.2.1/kisd4ojn67fuhutw5hpxqt4h4jwblrqr: /tmp/runner/spack-stage/spack-stage-roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr-6k5q13pz.log
+make: *** [Makefile:24: /home/runner/environment/.spack-env/makedeps/install/roctracer-dev-7.2.1-kisd4ojn67fuhutw5hpxqt4h4jwblrqr] Error 1
+make: *** Waiting for unfinished jobs....
+[+] n424tcr rocthrust@7.2.1 /home/runner/spack/opt/spack/linux-zen4/rocthrust-7.2.1-n424tcrq3mvz7hido6ldpsu3ntu2h2uo (1m46s)
+==> Updating view at /home/runner/rocm
+Error: building at STEP "RUN bash -l -c "     cd /home/runner &&     spack env depfile -o Makefile &&     (make -j24 || true) &&     make -j24 &&     spack clean --downloads &&     rm Makefile &&     rm -rf .cache"": while running runtime: exit status 2
