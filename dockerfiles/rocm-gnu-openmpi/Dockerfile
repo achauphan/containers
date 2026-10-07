@@ -42,11 +42,14 @@ spack:
   include:
   - modules.yaml
   packages:
+    c:
+      require: ['%gcc${compiler_version}']
+    cxx:
+      require: ['%gcc${compiler_version}']
+    fortran:
+      require: ['%gcc${compiler_version}']
     all:
-      require:
-      - '%gcc${compiler_version}^gcc-runtime${compiler_version}'
-      variants:
-      - 'amdgpu_target=${gpu_arch}'
+      variants: ['amdgpu_target=${gpu_arch}']
       target: [${cpu_arch}]
   specs:
   - hip${rocm_version}
