@@ -56,7 +56,7 @@ spack:
     - hip
     - rocm-smi-lib
     - llvm-amdgpu +link_llvm_dylib
-    - rocblas
+    - rocblas ~hipblaslt
     - rocsolver
     - rocsparse
     - rocrand
