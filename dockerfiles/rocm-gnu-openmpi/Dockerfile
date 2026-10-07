@@ -51,15 +51,20 @@ spack:
     all:
       variants: ['amdgpu_target=${gpu_arch}']
       target: [${cpu_arch}]
+  definitions:
+  - rocm_pkgs:
+    - hip
+    - rocm-smi-lib
+    - llvm-amdgpu +link_llvm_dylib
+    - rocblas
+    - rocsolver
+    - rocsparse
+    - rocrand
+    - rocthrust
   specs:
-  - hip${rocm_version}
-  - rocm-smi-lib${rocm_version}
-  - llvm-amdgpu${rocm_version} +link_llvm_dylib
-  - rocblas${rocm_version}
-  - rocsolver${rocm_version}
-  - rocsparse${rocm_version}
-  - rocrand${rocm_version}
-  - rocthrust${rocm_version}
+  - matrix:
+    - [\$rocm_pkgs]
+    - ['${rocm_version}']
   - openblas
   - openmpi${mpi_version}
   - boost +program_options+system
