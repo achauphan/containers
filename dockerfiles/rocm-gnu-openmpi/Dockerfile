@@ -34,8 +34,6 @@ RUN bash -l -c "\
     spack -C /home/runner install --deprecated gcc${compiler_version} target=${cpu_arch} && \
     spack clean --downloads"
 
-
-
 ARG mpi_version=
 
 RUN mkdir /home/runner/environment
@@ -47,16 +45,18 @@ spack:
     all:
       require:
       - '%gcc${compiler_version}^gcc-runtime${compiler_version}'
+      variants:
+      - 'amdgpu_target=${gpu_arch}'
       target: [${cpu_arch}]
   specs:
   - hip${rocm_version}
   - rocm-smi-lib${rocm_version}
   - llvm-amdgpu${rocm_version} +link_llvm_dylib
-  - rocblas${rocm_version} amdgpu_target=${gpu_arch}
-  - rocsolver${rocm_version}  amdgpu_target=${gpu_arch}
-  - rocsparse${rocm_version}  amdgpu_target=${gpu_arch}
-  - rocrand${rocm_version}  amdgpu_target=${gpu_arch}
-  - rocthrust${rocm_version}  amdgpu_target=${gpu_arch}
+  - rocblas${rocm_version}
+  - rocsolver${rocm_version}
+  - rocsparse${rocm_version}
+  - rocrand${rocm_version}
+  - rocthrust${rocm_version}
   - openblas
   - openmpi${mpi_version}
   - boost +program_options+system
